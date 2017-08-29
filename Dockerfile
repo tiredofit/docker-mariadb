@@ -1,4 +1,4 @@
-FROM registry.selfdesign.org/docker/alpine:3.4
+FROM tiredofit/alpine:3.4
 MAINTAINER Dave Conroy <dave at tiredofit dot ca>
 
     ENV MARIADB_VER=10.2.8 \
