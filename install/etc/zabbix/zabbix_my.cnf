@@ -1,0 +1,6 @@
+[mysql]
+user=root
+password=<ROOT_PASSWORD>
+[mysqladmin]
+user=root
+password=<ROOT_PASSWORD>
