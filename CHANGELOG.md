@@ -1,6 +1,7 @@
 ## 2.1 2017-08-28 <dave at tiredofit dot ca>
 
 * Image Reorganization
+* Tracking MariaDB release 10.28
 
 ## 2.0 2017-07-14 <dave at tiredofit dot ca>
 
