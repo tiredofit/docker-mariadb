@@ -111,7 +111,7 @@ MAINTAINER Dave Conroy <dave at tiredofit dot ca>
 
         
 ### Files Setup
-   ADD install/ /mysql
+   ADD install/ /
    RUN mv /etc/zabbix/zabbix_my.cnf /etc/zabbix/.my.cnf 
 
 ### Networking
