@@ -1,5 +1,5 @@
 FROM tiredofit/alpine:3.4
-MAINTAINER Dave Conroy <dave at tiredofit dot ca>
+LABEL maintainer="Dave Conroy (dave at tiredofit dot ca)"
 
     ENV MARIADB_VER=10.2.8 \
         ZABBIX_HOSTNAME=mariadb-db
