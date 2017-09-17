@@ -2,7 +2,8 @@ FROM tiredofit/alpine:3.4
 LABEL maintainer="Dave Conroy (dave at tiredofit dot ca)"
 
     ENV MARIADB_VER=10.2.8 \
-        ZABBIX_HOSTNAME=mariadb-db
+        ZABBIX_HOSTNAME=mariadb-db \
+        ENABLE_SMTP=FALSE
 
     ### Install Required Dependencies
     RUN export CPU=`cat /proc/cpuinfo | grep -c processor` \
