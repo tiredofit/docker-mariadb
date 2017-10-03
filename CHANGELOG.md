@@ -1,3 +1,7 @@
+## 2.2 2017-10-03 <dave at tiredofit dot ca>
+
+* Update my.cnf permissions to 0664
+
 ## 2.1 2017-08-28 <dave at tiredofit dot ca>
 
 * Image Reorganization

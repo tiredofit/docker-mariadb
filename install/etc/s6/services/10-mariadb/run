@@ -12,6 +12,7 @@ done
 	fi
 
 sed -i -e "s/<ROOT_PASSWORD>/$MYSQL_ROOT_PASSWORD/g" /etc/zabbix/.my.cnf
+chmod 0664 /etc/mysql/my.cnf
 
 if [ -d /var/lib/mysql/mysql ]; then
 	echo "[i] MySQL directory already present, skipping DB creation."
