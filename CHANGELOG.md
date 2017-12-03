@@ -1,3 +1,8 @@
+## 2.3 2017-12-03 <dave at tiredofit dot ca>
+
+* Update to MariaDB 10.2.11
+
+
 ## 2.2 2017-10-03 <dave at tiredofit dot ca>
 
 * Update my.cnf permissions to 0664
