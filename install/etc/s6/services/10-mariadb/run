@@ -11,14 +11,21 @@ done
 			exit 1
 	fi
 
+### Update for Zabbix Monitoring
 sed -i -e "s/<ROOT_PASSWORD>/$MYSQL_ROOT_PASSWORD/g" /etc/zabbix/.my.cnf
-chmod 0664 /etc/mysql/my.cnf
+chmod 0700 /etc/zabbix/.my.cnf
+chown -R zabbix /etc/zabbix
+
+
+### Permissions Fix
+chmod 0644 /etc/mysql/my.cnf
+
 
 if [ -d /var/lib/mysql/mysql ]; then
-	echo "[i] MySQL directory already present, skipping DB creation."
+	echo "** [mariadb] [i] MariaDB directory already present, skipping DB creation."
 else
 
-	echo "[i] MySQL data directory is not found, creating initial DB(s)..."
+	echo "** [mariadb] [i] MySQL data directory is not found, creating initial DB(s)..."
 	mysql_install_db --user=mysql --basedir=/usr --datadir=/var/lib/mysql --defaults-file=/etc/mysql/my.cnf >/dev/null
 
 TEMP_FILE='/tmp/mysql-first-time.sql'
