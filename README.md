@@ -1,5 +1,11 @@
  # hub.docker.com/tiredofit/mariadb
 
+[![Build Status](https://img.shields.io/docker/build/tiredofit/mariadb.svg)](https://hub.docker.com/r/tiredofit/mariadb)
+[![Docker Pulls](https://img.shields.io/docker/pulls/tiredofit/mariadb.svg)](https://hub.docker.com/r/tiredofit/mariadb)
+[![Docker Stars](https://img.shields.io/docker/stars/tiredofit/mariadb.svg)](https://hub.docker.com/r/tiredofit/mariadb)
+[![Docker Layers](https://images.microbadger.com/badges/image/tiredofit/mariadb.svg)](https://microbadger.com/images/tiredofit/mariadb)
+[![Image Size](https://img.shields.io/microbadger/image-size/tiredofit/mariadb.svg)](https://microbadger.com/images/tiredofit/mariadb)
+
 # Introduction
 
 Dockerfile to build a [MariaDB Server](https://mariadb.org) Image.
