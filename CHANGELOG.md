@@ -1,3 +1,7 @@
+## 2.5 2018-04-15 <dave at tiredofit dot ca>
+
+* Bump to 10.2.14
+
 ## 2.4 2018-01-31 <dave at tiredofit dot ca>
 
 * Bump to MariaDB 10.2.12 
