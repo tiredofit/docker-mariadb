@@ -1,0 +1,69 @@
+#!/usr/bin/with-contenv bash
+
+### Set Debug Mode
+if [ "$DEBUG_MODE" = "TRUE" ] || [ "$DEBUG_MODE" = "true" ]; then
+    set -x
+fi
+
+if [ -z "$MYSQL_ROOT_PASSWORD" -a -z "$MYSQL_ALLOW_EMPTY_PASSWORD" ]; then
+		echo >&2 '** [mariadb] error: database is uninitialized and MYSQL_ROOT_PASSWORD not set'
+		echo >&2 '    Did you forget to add -e MYSQL_ROOT_PASSWORD=... ?'
+		exit 1
+fi
+
+### Update for Zabbix Monitoring
+sed -i -e "s/<ROOT_PASSWORD>/$MYSQL_ROOT_PASSWORD/g" /etc/zabbix/.my.cnf
+chmod 0700 /etc/zabbix/.my.cnf
+chown -R zabbix /etc/zabbix
+
+# Set Character Set
+CHARACTER_SET=${CHARACTER_SET:-"utf8mb4"}
+sed -i -e "s/<CHARACTER_SET>/$CHARACTER_SET/g" /etc/mysql/my.cnf
+
+### Permissions Fix
+chmod 0644 /etc/mysql/my.cnf
+
+if [ -d /var/lib/mysql/mysql ]; then
+	echo "** [mariadb] MariaDB directory already present, skipping DB creation."
+  chown -R mariadb:mariadb /var/lib/mysql
+else
+
+	echo "** [mariadb] MariaDB data directory is not found, creating initial DB(s)..."
+	mkdir -p /var/lib/mysql
+  chown -R mariadb:mariadb /var/lib/mysql
+  mysql_install_db --user=mysql --basedir=/usr --datadir=/var/lib/mysql --defaults-file=/etc/mysql/my.cnf >/dev/null
+
+TEMP_FILE='/tmp/mysql-first-time.sql'
+cat > "$TEMP_FILE" <<-EOSQL
+DELETE FROM mysql.user ;
+CREATE USER 'root'@'%' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}' ;
+GRANT ALL ON *.* TO 'root'@'%' WITH GRANT OPTION ;
+DROP DATABASE IF EXISTS test ;
+FLUSH PRIVILEGES;
+EOSQL
+	
+  if [[ -n "${MYSQL_USER}" && -n "${MYSQL_DATABASE}" ]]; then
+    DATABASES=$(echo ${MYSQL_DATABASE} | tr "," "\n")
+
+    for DATABASE in ${DATABASES}
+    do
+      echo "CREATE DATABASE IF NOT EXISTS \`${DATABASE}\`;" >> $TEMP_FILE
+      echo "GRANT ALL PRIVILEGES ON \`${DATABASE}\`.* TO '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';" >> $TEMP_FILE
+    done
+
+    echo "FLUSH PRIVILEGES;" >> $TEMP_FILE
+  fi
+
+  if [[ -n "${MYSQL_USER}" && -z "${MYSQL_DATABASE}" ]]
+  then
+    echo "CREATE DATABASE IF NOT EXISTS \`${MYSQL_USER}\`;" >> $TEMP_FILE
+    echo "GRANT ALL PRIVILEGES ON \`${MYSQL_USER}\`.* TO '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';" >> $TEMP_FILE
+    echo "FLUSH PRIVILEGES;" >> $TEMP_FILE
+  fi
+
+  /usr/bin/mysqld --defaults-file=/etc/mysql/my.cnf --console --user=mariadb --init-file="$TEMP_FILE"
+  rm -f $TEMP_FILE
+fi
+
+mkdir -p /tmp/state/
+echo 'Initialization Complete' >/tmp/state/10-init-mariadb

@@ -1,3 +1,20 @@
+## 3.0.0 2018-08-22 <dave at tiredofit dot ca>
+
+* Maria DB 10.3.9 
+* Ability to Create Multiple Databases
+## 2.6.1 2018-08-22 <dave at tiredofit dot ca>
+
+* Bump to MariaDB 10.2.17
+
+## 2.6 2018-07-14 <dave at tiredofit dot ca>
+
+* Allow setting default character set (default at moment is urf8)
+
+## 2.51 2018-07-02 <dave at tiredofit dot ca>
+
+* Bump to Alpine 3.8
+* MariaDB 10.2.16
+
 ## 2.5 2018-04-15 <dave at tiredofit dot ca>
 
 * Bump to 10.2.14
