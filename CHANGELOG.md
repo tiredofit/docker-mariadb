@@ -1,7 +1,12 @@
+## 3.0.1 2018-09-18 <dave at tiredofit dot ca>
+
+* Fix bug with creating new database under mariadb username
+
 ## 3.0.0 2018-08-22 <dave at tiredofit dot ca>
 
 * Maria DB 10.3.9 
 * Ability to Create Multiple Databases
+
 ## 2.6.1 2018-08-22 <dave at tiredofit dot ca>
 
 * Bump to MariaDB 10.2.17
