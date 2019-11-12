@@ -1,3 +1,45 @@
+## 3.3.0 2019-11-11 <dave at tiredofit dot ca>
+
+* Added functionality to support scheduled backups within container (same functionality as tiredofit/mariadb-backup)
+
+## 3.2.0 2019-11-05 <dave at tiredofit dot ca>
+
+* MariaDB 10.4.8
+* Create DB Name with Charset and Default Collation
+* Auto Upgrade Check from earlier images
+* Renamed (but left compatibility) for Environment Variables
+* Added LZO and LZ4 compression capability
+* Included MySQL Tuner
+
+## 3.1.2 2019-10-21 <dave at tiredofit dot ca>
+
+* MariaDB 10.3.18
+
+## 3.1.1 2019-06-30 <dave at tiredofit dot ca>
+
+* Rename Proj4 to Proj
+
+## 3.1 2019-06-19 <dave at tiredofit dot ca>
+
+* Alpine 3.10
+
+## 3.0.5 2019-06-19 <dave at tiredofit dot ca>
+
+* MariaDB 10.3.16
+
+## 3.0.4 2019-06-13 <dave at tiredofit dot ca>
+
+* MariaDB 10.3.13
+
+## 3.0.3 2019-02-08 <dave at tiredofit dot ca>
+
+* Alpine 3.9
+* MariaDB 10.3.12
+
+## 3.0.2 2018-12-10 <dave at tiredofit dot ca>
+
+* MariaDB 10.3.11
+
 ## 3.0.1 2018-09-18 <dave at tiredofit dot ca>
 
 * Fix bug with creating new database under mariadb username

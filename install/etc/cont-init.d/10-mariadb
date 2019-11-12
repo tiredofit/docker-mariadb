@@ -5,64 +5,149 @@ if [ "$DEBUG_MODE" = "TRUE" ] || [ "$DEBUG_MODE" = "true" ]; then
     set -x
 fi
 
-if [ -z "$MYSQL_ROOT_PASSWORD" -a -z "$MYSQL_ALLOW_EMPTY_PASSWORD" ]; then
-		echo >&2 '** [mariadb] error: database is uninitialized and MYSQL_ROOT_PASSWORD not set'
-		echo >&2 '    Did you forget to add -e MYSQL_ROOT_PASSWORD=... ?'
-		exit 1
+### Legacy Environment Variables Conversion
+if [ -n "$MYSQL_ROOT_PASSWORD" ]; then
+  ROOT_PASS=${MYSQL_ROOT_PASSWORD}
 fi
 
-### Update for Zabbix Monitoring
-sed -i -e "s/<ROOT_PASSWORD>/$MYSQL_ROOT_PASSWORD/g" /etc/zabbix/.my.cnf
+if [ -n "$MYSQL_DATABASE" ]; then
+  DB_NAME=${MYSQL_DATABASE}
+fi
+
+if [ -n "$MYSQL_USER" ]; then
+  DB_USER=${MYSQL_USER}
+fi
+
+if [ -n "$MYSQL_PASSWORD" ]; then
+  DB_PASS=${MYSQL_PASSWORD}
+fi
+
+### Set Defaults
+DB_CHARACTER_SET=${CHARACTER_SET:-"utf8mb4"}
+DB_COLLATION=${DB_COLLEATION:-"utf8mb4_general_ci"}
+DB_CONFIGURATION=${DB_CONFIGURATION:-"standard"}
+DB_AUTO_UPGRADE=${DB_AUTO_UPGRADE:-"TRUE"}
+DB_BACKUP=${DB_BACKUP="FALSE"}
+
+### Enable or Disable the DB Backup Script
+if [ "$DB_BACKUP" != "TRUE" ] || [ "$DB_BACKUP" != "true" ]; then
+    echo "** [mariadb] Disabling Scheduled Backups"
+    s6-svc -d /var/run/s6/services/20-mariadb-backup
+fi
+
+
+case "$DB_CONFIGURATION" in
+        "standard" | "STANDARD" )
+        mysql_conf=standard.cnf
+        ;;
+        "default")
+        mysql_conf=default.cnf
+        ;;
+       *)
+        mysql_conf=default.cnf
+esac
+
+cp -R /assets/mariadb/$mysql_conf /etc/mysql/my.cnf
+mkdir -p /etc/mysql/conf.d 
+
+sed -i -e "s/<CHARACTER_SET>/$DB_CHARACTER_SET/g" /etc/mysql/my.cnf
+sed -i -e "s/<COLLATION>/$DB_COLLATION/g" /etc/mysql/my.cnf
+
+### Allow Zabbix Monitoring
+sed -i -e "s/<ROOT_PASSWORD>/$ROOT_PASS/g" /etc/zabbix/.my.cnf
 chmod 0700 /etc/zabbix/.my.cnf
 chown -R zabbix /etc/zabbix
 
-# Set Character Set
-CHARACTER_SET=${CHARACTER_SET:-"utf8mb4"}
-sed -i -e "s/<CHARACTER_SET>/$CHARACTER_SET/g" /etc/mysql/my.cnf
-
 ### Permissions Fix
-chmod 0644 /etc/mysql/my.cnf
+chmod -R 0644 /etc/mysql/
 
 if [ -d /var/lib/mysql/mysql ]; then
-	echo "** [mariadb] MariaDB directory already present, skipping DB creation."
-  chown -R mariadb:mariadb /var/lib/mysql
-else
+	echo "** [mariadb] MariaDB directory already present, skipping DB creation"
 
-	echo "** [mariadb] MariaDB data directory is not found, creating initial DB(s)..."
+  if [ ! -f "/var/lib/mysql/.version" ]; then
+    echo "** [mariadb] Detected MariaDB data originally created with another Docker Image. Adding Auto Upgrade support"
+    echo $MARIADB_VERSION 'first used on previously in place databases on '`date`> /var/lib/mysql/.version
+    if [ "$DB_AUTO_UPGRADE" = "TRUE" ] || [ "$DB_AUTO_UPGRADE" = "false" ]; then
+        echo "** [mariadb] NOTICE: Upgrading Databases to $MARIADB_VERSION format"
+        /usr/bin/mysqld --defaults-file=/etc/mysql/my.cnf --user=mariadb --skip-name-resolve > /dev/null 2>&1 &
+        sleep 10
+        mysql_upgrade -uroot -p${ROOT_PASS} --silent
+        mysqladmin -uroot -p${ROOT_PASS} shutdown
+        echo $MARIADB_VERSION 'upgraded on '`date` | cat - /var/lib/mysql/.version > /tmp/.version && mv /tmp/.version /var/lib/mysql/.version
+    else
+        echo "** [mariadb] NOTICE: Skipping Upgrading Databases to $MARIADB_VERSION format"
+    fi
+  fi
+
+  if [ "$MARIADB_VERSION" != `head -n 1 /var/lib/mysql/.version | awk '{print $1'}` ]; then
+    echo "** [mariadb] NOTICE: Previous MariaDB Version: "`head -n 1 /var/lib/mysql.version | awk '{print $1}'`
+    echo "** [mariadb] NOTICE: Image MariaDB Version: $MARIA_DB_VERSION"
+      if [ "$DB_AUTO_UPGRADE" = "TRUE" ] || [ "$DB_AUTO_UPGRADE" = "false" ]; then
+        echo "** [mariadb] NOTICE: Upgrading Databases to $MARIADB_VERSION format"
+        /usr/bin/mysqld --defaults-file=/etc/mysql/my.cnf --user=mariadb --skip-name-resolve > /dev/null 2>&1 &
+        sleep 10
+        mysql_upgrade -uroot -p${ROOT_PASS} --silent
+        mysqladmin -uroot -p${ROOT_PASS} shutdown
+        echo $MARIADB_VERSION 'upgraded on '`date` | cat - /var/lib/mysql/.version > /tmp/.version && mv /tmp/.version /var/lib/mysql/.version
+      else
+        echo "** [mariadb] NOTICE: Skipping Upgrading Databases to $MARIADB_VERSION format"
+      fi
+  fi
+
+  chown -R mariadb:mariadb /var/lib/mysql
+
+else
+	echo "** [mariadb] MariaDB data directory is not found, creating initial DB(s)"
+  if [ -z "$ROOT_PASS" ]; then
+    echo >&2 '** [mariadb] ERROR: ROOT_PASS is not set'
+    exit 1
+  fi
+
+  if [[ -n "${DB_USER}" && "${DB_PASS}" = "" ]]; then
+    echo >&2 '** [mariadb] ERROR: DB_PASS is not set'
+    exit 1
+  fi
+
 	mkdir -p /var/lib/mysql
   chown -R mariadb:mariadb /var/lib/mysql
-  mysql_install_db --user=mariadb --basedir=/usr --datadir=/var/lib/mysql --defaults-file=/etc/mysql/my.cnf >/dev/null
+  mysql_install_db --user=mariadb --basedir=/usr --datadir=/var/lib/mysql --defaults-file=/etc/mysql/my.cnf --auth-root-authentication-method=normal >/dev/null
+  INIT_FILE=`mktemp`
 
-TEMP_FILE='/tmp/mysql-first-time.sql'
-cat > "$TEMP_FILE" <<-EOSQL
-DELETE FROM mysql.user ;
-CREATE USER 'root'@'%' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}' ;
-GRANT ALL ON *.* TO 'root'@'%' WITH GRANT OPTION ;
-DROP DATABASE IF EXISTS test ;
+cat <<EOSQL >"$INIT_FILE"
+USE mysql;
 FLUSH PRIVILEGES;
+GRANT ALL ON *.* TO 'root'@'%' identified by 'ROOT_PASS' WITH GRANT OPTION;
+GRANT ALL ON *.* TO 'root'@'localhost' identified by '$ROOT_PASS' WITH GRANT OPTION;
+SET PASSWORD FOR 'root'@'localhost'=PASSWORD('${ROOT_PASS}');
+SET PASSWORD FOR 'root'@'%'=PASSWORD('${ROOT_PASS}');
+DROP DATABASE IF EXISTS test;
 EOSQL
 	
-  if [[ -n "${MYSQL_USER}" && -n "${MYSQL_DATABASE}" ]]; then
-    DATABASES=$(echo ${MYSQL_DATABASE} | tr "," "\n")
+  if [[ -n "${DB_USER}" && -n "${DB_NAME}" ]]; then
+    DATABASES=$(echo ${DB_NAME} | tr "," "\n")
 
     for DATABASE in ${DATABASES}
     do
-      echo "CREATE DATABASE IF NOT EXISTS \`${DATABASE}\`;" >> $TEMP_FILE
-      echo "GRANT ALL PRIVILEGES ON \`${DATABASE}\`.* TO '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';" >> $TEMP_FILE
+      echo "** [mariadb] Creating $DATABASE database"
+      echo "CREATE DATABASE IF NOT EXISTS \`${DATABASE}\` CHARACTER SET ${DB_CHARACTER_SET} COLLATE ${DB_COLLATION};" >> $INIT_FILE
+      echo "GRANT ALL ON \`${DATABASE}\`.* TO '${DB_USER}'@'%' IDENTIFIED BY '${DB_PASS}';" >> $INIT_FILE
+      echo "GRANT ALL ON \`${DATABASE}\`.* TO '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';" >> $INIT_FILE
     done
 
-    echo "FLUSH PRIVILEGES;" >> $TEMP_FILE
+    echo "FLUSH PRIVILEGES;" >> $INIT_FILE
   fi
 
-  if [[ -n "${MYSQL_USER}" && -z "${MYSQL_DATABASE}" ]]
-  then
-    echo "CREATE DATABASE IF NOT EXISTS \`${MYSQL_USER}\`;" >> $TEMP_FILE
-    echo "GRANT ALL PRIVILEGES ON \`${MYSQL_USER}\`.* TO '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';" >> $TEMP_FILE
-    echo "FLUSH PRIVILEGES;" >> $TEMP_FILE
+  if [[ -n "${DB_USER}" && -z "${DB_NAME}" ]]; then
+     echo "** [mariadb] Creating ${DB_USER} database"
+     echo "FLUSH PRIVILEGES;" >> $INIT_FILE
+     echo "CREATE DATABASE IF NOT EXISTS \`${DB_USER}\` CHARACTER SET ${DB_CHARACTER_SET} COLLATE ${DB_COLLATION};" >> $INIT_FILE
+     echo "GRANT ALL PRIVILEGES ON \`${DB_USER}\`.* TO '${DB_USER}'@'%' IDENTIFIED BY '${DB_PASS}';" >> $INIT_FILE
   fi
-
-  /usr/bin/mysqld --defaults-file=/etc/mysql/my.cnf --console --user=mariadb --init-file="$TEMP_FILE"
-  rm -f $TEMP_FILE
+   
+  chown -R mariadb:mariadb $INIT_FILE
+  /usr/bin/mysqld --user=mariadb --bootstrap --skip-name-resolve --skip-networking=0< $INIT_FILE
+  echo $MARIADB_VERSION 'first installed on '`date`> /var/lib/mysql/.version
+  rm -f $INIT_FILE
 fi
 
 mkdir -p /tmp/state/

@@ -16,4 +16,4 @@ if [ ! -f /tmp/state/10-mariadb ]; then
 fi
 
 echo "** [mariadb] Starting MariaDB" $MARIADB_VERSION
-exec /usr/bin/mysqld --defaults-file=/etc/mysql/my.cnf --user=mariadb --console
+exec /usr/bin/mysqld --defaults-file=/etc/mysql/my.cnf --user=mariadb --console --skip-name-resolve

@@ -19,7 +19,7 @@ tmp_table_size			= 32M
 wait_timeout			= 600
 character-set-client-handshake = FALSE
 character-set-server = <CHARACTER_SET>
-collation-server = utf8mb4_unicode_ci
+collation-server = <COLLATION>
 
 ###  MyISAM
 ###
