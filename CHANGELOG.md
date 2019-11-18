@@ -1,3 +1,9 @@
+## 3.3.1 2019-11-18 <dave at tiredofit dot ca>
+
+   ### Added
+      - Update to MariaDB 10.4.10
+
+
 ## 3.3.0 2019-11-11 <dave at tiredofit dot ca>
 
 * Added functionality to support scheduled backups within container (same functionality as tiredofit/mariadb-backup)

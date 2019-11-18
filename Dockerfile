@@ -1,7 +1,7 @@
 FROM tiredofit/alpine:3.10
 LABEL maintainer="Dave Conroy (dave at tiredofit dot ca)"
 
-ENV MARIADB_VERSION=10.4.8 \
+ENV MARIADB_VERSION=10.4.10 \
     MYSQLTUNER_VERSION=1.7.17 \
     ZABBIX_HOSTNAME=mariadb-db \
     ENABLE_SMTP=FALSE \
