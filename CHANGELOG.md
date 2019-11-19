@@ -1,3 +1,9 @@
+## 3.3.2 2019-11-18 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Change in execution of embedded backup script
+
+
 ## 3.3.1 2019-11-18 <dave at tiredofit dot ca>
 
    ### Added
