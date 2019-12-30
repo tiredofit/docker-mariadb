@@ -1,22 +1,21 @@
 #!/usr/bin/with-contenv bash
 
-### Set Debug Mode
-if [ "$DEBUG_MODE" = "TRUE" ] || [ "$DEBUG_MODE" = "true" ]; then
-    set -x
-fi
-
-if [ "$1" != "NOW" ]; then
-    if [ ! -f /tmp/state/10-mariadb ]; then
-        echo "** [mariadb-backup] MariaDB has not properly initialized!"
-        exit 1
-    fi
-    sleep 10
-fi
+source /assets/functions/*
+PROCESS_NAME="mariadb-backup"
+liftoff
 
 while [ ! -f /tmp/state/10-mariadb ]
 do
   sleep 10
 done
+
+if [ "$1" != "NOW" ]; then
+    if [ ! -f /tmp/state/10-mariadb ]; then
+        print_error "MariaDB has not properly initialized!"
+        exit 1
+    fi
+    sleep 10
+fi
 
 date >/dev/null
 
@@ -56,7 +55,7 @@ function backup_mariadb() {
 
         for db in $DATABASES; do
                 if [[ "$db" != "information_schema" ]] && [[ "$db" != _* ]] ; then
-                    echo "** [db-backup] Dumping database: $db at "$(date)
+                    print_info "Dumping database: $db at `date`"
                     TARGET=mariadb_${db}_${DBHOST}_${now}.sql
                     mysqldump --max-allowed-packet=512M -u$DBUSER ${MARIADB_PASS_STR} --databases $db > ${TMPDIR}/${TARGET}
                     generate_md5
@@ -66,7 +65,7 @@ function backup_mariadb() {
         done
     else
         mysqldump --max-allowed-packet=512M -A -u$DBUSER ${MARIADB_PASS_STR} > ${TMPDIR}/${TARGET}
-        echo "** [db-backup] Dumping database: $DBNAME at "$(date)
+        print_info "Dumping database: $DBNAME at `date`"
         generate_md5
         compression
         move_backup
@@ -75,19 +74,19 @@ function backup_mariadb() {
 
 
 function check_availability() {
-            COUNTER=0
-            while true; do
-                mysqlcmd='mysql -u'${DBUSER}' -p'${DBPASS}
-                out="`$mysqlcmd -e "SELECT COUNT(*) FROM information_schema.FILES;" 2>&1`"
-                echo "$out" | grep -E "COUNT|Enter" 2>&1 > /dev/null
-                if [ $? -eq 0 ]; then
-                    :
-                    break
-                fi
-                echo "** [mariadb-backup] MariaDB Server is not accessible, retrying.. ($COUNTER seconds so far)"
-                sleep 5
-                let COUNTER+=5
-            done
+        COUNTER=0
+        while true; do
+            mysqlcmd='mysql -u'${DBUSER}' -p'${DBPASS}
+            out="`$mysqlcmd -e "SELECT COUNT(*) FROM information_schema.FILES;" 2>&1`"
+            echo "$out" | grep -E "COUNT|Enter" 2>&1 > /dev/null
+            if [ $? -eq 0 ]; then
+                :
+                break
+            fi
+            print_warn "MariaDB Server is not accessible, retrying.. ($COUNTER seconds so far)"
+            sleep 5
+            let COUNTER+=5
+        done
 }
 
 function compression() {
@@ -124,45 +123,45 @@ function move_backup() {
 
 
 ### Container Startup
-echo '** [mariadb-backup] Backup Functionality initialized at '$(date)
+print_info "Backup Functionality initialized at `date`"
 
 ### Wait for Next time to start backup
-  current_time=$(date +"%s")
-  today=$(date +"%Y%m%d")
+current_time=$(date +"%s")
+today=$(date +"%Y%m%d")
 
-  if [[ $DB_BACKUP_DUMP_BEGIN =~ ^\+(.*)$ ]]; then
-        waittime=$(( ${BASH_REMATCH[1]} * 60 ))
-  else
-        target_time=$(date --date="${today}${DB_BACKUP_DUMP_BEGIN}" +"%s")
+if [[ $DB_BACKUP_DUMP_BEGIN =~ ^\+(.*)$ ]]; then
+    waittime=$(( ${BASH_REMATCH[1]} * 60 ))
+else
+    target_time=$(date --date="${today}${DB_BACKUP_DUMP_BEGIN}" +"%s")
     if [[ "$target_time" < "$current_time" ]]; then
         target_time=$(($target_time + 24*60*60))
     fi
-  waittime=$(($target_time - $current_time))
-  fi
+    waittime=$(($target_time - $current_time))
+fi
 
-  sleep $waittime
+sleep $waittime
 
 
 ### Commence Backup
-  while true; do
+while true; do
     # make sure the directory exists
     mkdir -p $TMPDIR
 
-### Define Target name
+    ### Define Target name
     now=$(date +"%Y%m%d-%H%M%S")
     TARGET=${DBTYPE}_${DBNAME}_${DBHOST}_${now}.sql
 
-### Take a Dump
-        check_availability
-        backup_mariadb
+    ### Take a Dump
+    check_availability
+    backup_mariadb
 
-### Zabbix
+    ### Zabbix
     if [ "$ENABLE_ZABBIX" = "TRUE" ] || [ "$ENABLE_ZABBIX" = "true" ];  then
-        zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k dbbackup.size -o `stat -c%s ${DB_BACKUP_DUMP_TARGET}/${TARGET}` >/dev/null 2&>1
-        zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k dbbackup.datetime -o `date -r  ${DB_BACKUP_DUMP_TARGET}/${TARGET} +'%s'` >/dev/null 2&>1
+        silent zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k dbbackup.size -o `stat -c%s ${DB_BACKUP_DUMP_TARGET}/${TARGET}`
+        silent zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k dbbackup.datetime -o `date -r  ${DB_BACKUP_DUMP_TARGET}/${TARGET} +'%s'`
     fi
 
-### Automatic Cleanup
+    ### Automatic Cleanup
     if [[ -n "$DB_BACKUP_CLEANUP_TIME" ]]; then
           find $DB_BACKUP_DUMP_TARGET/  -mmin +$DB_BACKUP_CLEANUP_TIME -iname "$DBTYPE_$DBNAME_*.*" -exec rm {} \;
     fi
@@ -174,6 +173,6 @@ echo '** [mariadb-backup] Backup Functionality initialized at '$(date)
         sleep $(($DB_BACKUP_FREQ*60))
     fi
 
-  done
-fi
+done
+
 

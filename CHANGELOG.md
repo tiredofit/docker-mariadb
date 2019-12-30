@@ -1,3 +1,33 @@
+## 3.4.0 2019-12-29 <dave at tiredofit dot ca>
+
+   ### Added
+      - Update to support new tiredofit/alpine image
+
+
+## 3.3.6 2019-12-16 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Previous IMAGE_VERSION wasn't being populated on screen
+
+
+## 3.3.5 2019-12-16 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Repair Auto Upgrade schema functionality
+
+
+## 3.3.4 2019-12-15 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Switch to Alpine Edge due to missing proj/geos dependencies
+
+
+## 3.3.3 2019-12-15 <dave at tiredofit dot ca>
+
+   ### Added
+      - MariaDB 10.4.11
+
+
 ## 3.3.2 2019-11-18 <dave at tiredofit dot ca>
 
    ### Changed
