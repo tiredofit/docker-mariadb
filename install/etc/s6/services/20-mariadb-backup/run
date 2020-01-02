@@ -1,13 +1,11 @@
 #!/usr/bin/with-contenv bash
 
-source /assets/functions/*
+for s in /assets/functions/*; do source $s; done
 PROCESS_NAME="mariadb-backup"
-liftoff
 
-while [ ! -f /tmp/state/10-mariadb ]
-do
-  sleep 10
-done
+check_container_initialized
+check_service_initialized init 10-mariadb
+liftoff
 
 if [ "$1" != "NOW" ]; then
     if [ ! -f /tmp/state/10-mariadb ]; then
@@ -49,7 +47,7 @@ else
     XZIP="xz"
 fi
 
-function backup_mariadb() {
+backup_mariadb() {
     if [ "$DB_BACKUP_SPLIT_DB" = "TRUE" ] || [ "$DB_BACKUP_SPLIT_DB" = "true" ];  then
         DATABASES=`mysql -u$DBUSER -p$DBPASS --batch -e "SHOW DATABASES;" | grep -v Database|grep -v schema`
 
@@ -73,7 +71,7 @@ function backup_mariadb() {
 }
 
 
-function check_availability() {
+check_availability() {
         COUNTER=0
         while true; do
             mysqlcmd='mysql -u'${DBUSER}' -p'${DBPASS}
@@ -89,7 +87,7 @@ function check_availability() {
         done
 }
 
-function compression() {
+compression() {
    case "$DB_BACKUP_COMPRESSION" in
         "GZ" | "gz" | "gzip" | "GZIP")
         $GZIP ${TMPDIR}/${TARGET}
@@ -108,14 +106,14 @@ function compression() {
     esac
 }
 
-function generate_md5() {
+generate_md5() {
 if [ "$DB_BACKUP_MD5" = "TRUE" ] || [ "$DB_BACKUP_MD5" = "true" ] ;  then
     cd $TMPDIR
     md5sum ${TARGET} > ${TARGET}.md5
 fi
 }
 
-function move_backup() {
+move_backup() {
     mkdir -p ${DB_BACKUP_DUMP_TARGET}
     mv ${TMPDIR}/*.md5 ${DB_BACKUP_DUMP_TARGET}/
     mv ${TMPDIR}/${TARGET} ${DB_BACKUP_DUMP_TARGET}/${TARGET}
@@ -174,5 +172,3 @@ while true; do
     fi
 
 done
-
-

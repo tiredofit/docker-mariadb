@@ -1,6 +1,6 @@
 #!/usr/bin/with-contenv bash
 
-source /assets/functions/*
+for s in /assets/functions/*; do source $s; done
 PROCESS_NAME="mariadb"
 
 ### Legacy Environment Variables Conversion
@@ -29,7 +29,7 @@ DB_BACKUP=${DB_BACKUP="FALSE"}
 
 ### Enable or Disable the DB Backup Script
 if [ "$DB_BACKUP" != "TRUE" ] || [ "$DB_BACKUP" != "true" ]; then
-    print_warn "Disabling Scheduled Backups"
+    print_notice "Disabling Scheduled Backups"
     s6-svc -d /var/run/s6/services/20-mariadb-backup
 fi
 
@@ -119,7 +119,7 @@ EOSQL
 
     for DATABASE in ${DATABASES}
     do
-      print_warn "Creating $DATABASE database"
+      print_notice "Creating $DATABASE database"
       echo "CREATE DATABASE IF NOT EXISTS \`${DATABASE}\` CHARACTER SET ${DB_CHARACTER_SET} COLLATE ${DB_COLLATION};" >> $INIT_FILE
       echo "GRANT ALL ON \`${DATABASE}\`.* TO '${DB_USER}'@'%' IDENTIFIED BY '${DB_PASS}';" >> $INIT_FILE
       echo "GRANT ALL ON \`${DATABASE}\`.* TO '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';" >> $INIT_FILE
@@ -129,7 +129,7 @@ EOSQL
   fi
 
   if [[ -n "${DB_USER}" && -z "${DB_NAME}" ]]; then
-     print_warn "Creating ${DB_USER} database"
+     print_notice "Creating ${DB_USER} database"
      echo "FLUSH PRIVILEGES;" >> $INIT_FILE
      echo "CREATE DATABASE IF NOT EXISTS \`${DB_USER}\` CHARACTER SET ${DB_CHARACTER_SET} COLLATE ${DB_COLLATION};" >> $INIT_FILE
      echo "GRANT ALL PRIVILEGES ON \`${DB_USER}\`.* TO '${DB_USER}'@'%' IDENTIFIED BY '${DB_PASS}';" >> $INIT_FILE
