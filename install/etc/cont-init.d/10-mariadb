@@ -30,7 +30,7 @@ DB_BACKUP=${DB_BACKUP="FALSE"}
 ### Enable or Disable the DB Backup Script
 if [ "$DB_BACKUP" != "TRUE" ] || [ "$DB_BACKUP" != "true" ]; then
     print_notice "Disabling Scheduled Backups"
-    s6-svc -d /var/run/s6/services/20-mariadb-backup
+    service_stop 20-mariadb-backup
 fi
 
 
@@ -46,7 +46,7 @@ case "$DB_CONFIGURATION" in
 esac
 
 cp -R /assets/mariadb/$mysql_conf /etc/mysql/my.cnf
-mkdir -p /etc/mysql/conf.d 
+mkdir -p /etc/mysql/conf.d
 
 sed -i -e "s/<CHARACTER_SET>/$DB_CHARACTER_SET/g" /etc/mysql/my.cnf
 sed -i -e "s/<COLLATION>/$DB_COLLATION/g" /etc/mysql/my.cnf
@@ -96,9 +96,9 @@ if [ -d /var/lib/mysql/mysql ]; then
 
 else
 	print_warn "MariaDB data directory is not found, creating initial DB(s)"
-  sanity_var ROOT_PASS "Root Password" 
-  sanity_var DB_PASS "Database Password" 
-  
+  sanity_var ROOT_PASS "Root Password"
+  sanity_var DB_PASS "Database Password"
+
 	mkdir -p /var/lib/mysql
   chown -R mariadb:mariadb /var/lib/mysql
   mysql_install_db --user=mariadb --basedir=/usr --datadir=/var/lib/mysql --defaults-file=/etc/mysql/my.cnf --auth-root-authentication-method=normal >/dev/null
@@ -113,7 +113,7 @@ SET PASSWORD FOR 'root'@'localhost'=PASSWORD('${ROOT_PASS}');
 SET PASSWORD FOR 'root'@'%'=PASSWORD('${ROOT_PASS}');
 DROP DATABASE IF EXISTS test;
 EOSQL
-	
+
   if [[ -n "${DB_USER}" && -n "${DB_NAME}" ]]; then
     DATABASES=$(echo ${DB_NAME} | tr "," "\n")
 
@@ -134,7 +134,7 @@ EOSQL
      echo "CREATE DATABASE IF NOT EXISTS \`${DB_USER}\` CHARACTER SET ${DB_CHARACTER_SET} COLLATE ${DB_COLLATION};" >> $INIT_FILE
      echo "GRANT ALL PRIVILEGES ON \`${DB_USER}\`.* TO '${DB_USER}'@'%' IDENTIFIED BY '${DB_PASS}';" >> $INIT_FILE
   fi
-   
+
   chown -R mariadb:mariadb $INIT_FILE
   /usr/bin/mysqld --user=mariadb --bootstrap --skip-name-resolve --skip-networking=0< $INIT_FILE
   echo $MARIADB_VERSION 'first installed on '`date`> /var/lib/mysql/.version
