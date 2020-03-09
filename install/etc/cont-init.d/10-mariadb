@@ -25,14 +25,6 @@ DB_CHARACTER_SET=${CHARACTER_SET:-"utf8mb4"}
 DB_COLLATION=${DB_COLLEATION:-"utf8mb4_general_ci"}
 DB_CONFIGURATION=${DB_CONFIGURATION:-"standard"}
 DB_AUTO_UPGRADE=${DB_AUTO_UPGRADE:-"TRUE"}
-DB_BACKUP=${DB_BACKUP="FALSE"}
-
-### Enable or Disable the DB Backup Script
-if [ "$DB_BACKUP" != "TRUE" ] || [ "$DB_BACKUP" != "true" ]; then
-    print_notice "Disabling Scheduled Backups"
-    service_stop 20-mariadb-backup
-fi
-
 
 case "$DB_CONFIGURATION" in
         "standard" | "STANDARD" )

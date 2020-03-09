@@ -1,3 +1,9 @@
+## 3.4.4 2020-03-09 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Fix for container startup routines
+
+
 ## 3.4.3 2020-03-04 <dave at tiredofit dot ca>
 
    ### Added
