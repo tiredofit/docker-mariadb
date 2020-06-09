@@ -1,0 +1,6 @@
+#!/usr/bin/with-contenv bash
+
+DB_AUTO_UPGRADE=${DB_AUTO_UPGRADE:-"TRUE"}
+DB_CHARACTER_SET=${DB_CHARACTER_SET:-"utf8mb4"}
+DB_COLLATION=${DB_COLLATION:-"utf8mb4_general_ci"}
+DB_CONFIGURATION=${DB_CONFIGURATION:-"standard"}

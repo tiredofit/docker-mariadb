@@ -1,6 +1,7 @@
 #!/usr/bin/with-contenv bash
 
-for s in /assets/functions/*; do source $s; done
+source /assets/functions/00-container
+prepare_service
 PROCESS_NAME="mariadb"
 
 ### Legacy Environment Variables Conversion
@@ -19,12 +20,6 @@ fi
 if [ -n "$MYSQL_PASSWORD" ]; then
   DB_PASS=${MYSQL_PASSWORD}
 fi
-
-### Set Defaults
-DB_CHARACTER_SET=${CHARACTER_SET:-"utf8mb4"}
-DB_COLLATION=${DB_COLLEATION:-"utf8mb4_general_ci"}
-DB_CONFIGURATION=${DB_CONFIGURATION:-"standard"}
-DB_AUTO_UPGRADE=${DB_AUTO_UPGRADE:-"TRUE"}
 
 case "$DB_CONFIGURATION" in
         "standard" | "STANDARD" )
