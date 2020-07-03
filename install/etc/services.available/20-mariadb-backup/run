@@ -49,21 +49,21 @@ fi
 
 backup_mariadb() {
     if [ "$DB_BACKUP_SPLIT_DB" = "TRUE" ] || [ "$DB_BACKUP_SPLIT_DB" = "true" ];  then
-        DATABASES=`mysql -u$DBUSER -p$DBPASS --batch -e "SHOW DATABASES;" | grep -v Database|grep -v schema`
+        DATABASES=$(mysql -u$DBUSER -p$DBPASS --batch -e "SHOW DATABASES;" | grep -v Database|grep -v schema)
 
         for db in $DATABASES; do
                 if [[ "$db" != "information_schema" ]] && [[ "$db" != _* ]] ; then
-                    print_info "Dumping database: $db at `date`"
+                    print_info "Dumping database: $db at $(date)"
                     TARGET=mariadb_${db}_${DBHOST}_${now}.sql
-                    mysqldump --max-allowed-packet=512M -u$DBUSER ${MARIADB_PASS_STR} --databases $db > ${TMPDIR}/${TARGET}
+                    mysqldump --max-allowed-packet=512M -u$DBUSER ${MARIADB_PASS_STR} --databases $db > ${TMPDIR}/"${TARGET}"
                     generate_md5
                     compression
                     move_backup
                 fi
         done
     else
-        mysqldump --max-allowed-packet=512M -A -u$DBUSER ${MARIADB_PASS_STR} > ${TMPDIR}/${TARGET}
-        print_info "Dumping database: $DBNAME at `date`"
+        mysqldump --max-allowed-packet=512M -A -u$DBUSER ${MARIADB_PASS_STR} > ${TMPDIR}/"${TARGET}"
+        print_info "Dumping database: $DBNAME at $(date)"
         generate_md5
         compression
         move_backup
@@ -75,7 +75,7 @@ check_availability() {
         COUNTER=0
         while true; do
             mysqlcmd='mysql -u'${DBUSER}' -p'${DBPASS}
-            out="`$mysqlcmd -e "SELECT COUNT(*) FROM information_schema.FILES;" 2>&1`"
+            out="$($mysqlcmd -e "SELECT COUNT(*) FROM information_schema.FILES;" 2>&1)"
             echo "$out" | grep -E "COUNT|Enter" 2>&1 > /dev/null
             if [ $? -eq 0 ]; then
                 :
@@ -83,22 +83,22 @@ check_availability() {
             fi
             print_warn "MariaDB Server is not accessible, retrying.. ($COUNTER seconds so far)"
             sleep 5
-            let COUNTER+=5
+            (( COUNTER+=5 ))
         done
 }
 
 compression() {
    case "$DB_BACKUP_COMPRESSION" in
         "GZ" | "gz" | "gzip" | "GZIP")
-        $GZIP ${TMPDIR}/${TARGET}
+        $GZIP ${TMPDIR}/"${TARGET}"
         TARGET=${TARGET}.gz
         ;;
         "BZ" | "bz" | "bzip2" | "BZIP2" | "bzip" | "BZIP" | "bz2" | "BZ2")
-        $BZIP ${TMPDIR}/${TARGET}
+        $BZIP ${TMPDIR}/"${TARGET}"
         TARGET=${TARGET}.bz2
         ;;
         "XZ" | "xz" | "XZIP" | "xzip" )
-        $XZIP ${TMPDIR}/${TARGET}
+        $XZIP ${TMPDIR}/"${TARGET}"
         TARGET=${TARGET}.xz
         ;;
         "NONE" | "none" | "FALSE" | "false")
@@ -109,19 +109,19 @@ compression() {
 generate_md5() {
 if [ "$DB_BACKUP_MD5" = "TRUE" ] || [ "$DB_BACKUP_MD5" = "true" ] ;  then
     cd $TMPDIR
-    md5sum ${TARGET} > ${TARGET}.md5
+    md5sum "${TARGET}" > "${TARGET}".md5
 fi
 }
 
 move_backup() {
-    mkdir -p ${DB_BACKUP_DUMP_TARGET}
-    mv ${TMPDIR}/*.md5 ${DB_BACKUP_DUMP_TARGET}/
-    mv ${TMPDIR}/${TARGET} ${DB_BACKUP_DUMP_TARGET}/${TARGET}
+    mkdir -p "${DB_BACKUP_DUMP_TARGET}"
+    mv ${TMPDIR}/*.md5 "${DB_BACKUP_DUMP_TARGET}"/
+    mv ${TMPDIR}/"${TARGET}" "${DB_BACKUP_DUMP_TARGET}"/"${TARGET}"
 }
 
 
 ### Container Startup
-print_info "Backup Functionality initialized at `date`"
+print_info "Backup Functionality initialized at $(date)"
 
 ### Wait for Next time to start backup
 current_time=$(date +"%s")
@@ -155,13 +155,13 @@ while true; do
 
     ### Zabbix
     if [ "$ENABLE_ZABBIX" = "TRUE" ] || [ "$ENABLE_ZABBIX" = "true" ];  then
-        silent zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k dbbackup.size -o `stat -c%s ${DB_BACKUP_DUMP_TARGET}/${TARGET}`
-        silent zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k dbbackup.datetime -o `date -r  ${DB_BACKUP_DUMP_TARGET}/${TARGET} +'%s'`
+        silent zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k dbbackup.size -o $(stat -c%s "${DB_BACKUP_DUMP_TARGET}"/"${TARGET}")
+        silent zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k dbbackup.datetime -o $(date -r  "${DB_BACKUP_DUMP_TARGET}"/"${TARGET}" +'%s')
     fi
 
     ### Automatic Cleanup
     if [[ -n "$DB_BACKUP_CLEANUP_TIME" ]]; then
-          find $DB_BACKUP_DUMP_TARGET/  -mmin +$DB_BACKUP_CLEANUP_TIME -iname "$DBTYPE_$DBNAME_*.*" -exec rm {} \;
+          find "$DB_BACKUP_DUMP_TARGET"/  -mmin +"$DB_BACKUP_CLEANUP_TIME" -iname "$DBTYPE_$DBNAME_*.*" -exec rm {} \;
     fi
 
     ### Go back to Sleep until next Backup time
