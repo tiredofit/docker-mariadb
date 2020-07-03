@@ -3,10 +3,10 @@
 [![Build Status](https://img.shields.io/docker/build/tiredofit/mariadb.svg)](https://hub.docker.com/r/tiredofit/mariadb)
 [![Docker Pulls](https://img.shields.io/docker/pulls/tiredofit/mariadb.svg)](https://hub.docker.com/r/tiredofit/mariadb)
 [![Docker Stars](https://img.shields.io/docker/stars/tiredofit/mariadb.svg)](https://hub.docker.com/r/tiredofit/mariadb)
-[![Docker 
+[![Docker
 Layers](https://images.microbadger.com/badges/image/tiredofit/mariadb.svg)](https://microbadger.com/images/tiredofit/mariadb)
 
-# Introduction
+## Introduction
 
 Dockerfile to build a [MariaDB Server](https://mariadb.org) Image.
 
@@ -32,30 +32,31 @@ Also has the capability of backing up embedded in the container based on the [ti
 
 [Changelog](CHANGELOG.md)
 
-# Authors
+## Authors
 
 - [Dave Conroy](https://github.com/tiredofit)
 
-# Table of Contents
+## Table of Contents
 
 - [Introduction](#introduction)
-    - [Changelog](CHANGELOG.md)
+- [Authors](#authors)
+- [Table of Contents](#table-of-contents)
+- [Prerequisites](#prerequisites)
 - [Installation](#installation)
-- [Quick Start](#quick-start)
+  - [Quick Start](#quick-start)
 - [Configuration](#configuration)
-    - [Database](#database)
-    - [Data Volumes](#data-volumes)
-    - [Environment Variables](#environmentvariables)   
-    - [Networking](#networking)
+  - [Data-Volumes](#data-volumes)
+  - [Environment Variables](#environment-variables)
+  - [Networking](#networking)
 - [Maintenance](#maintenance)
-    - [Shell Access](#shell-access)
+  - [Shell Access](#shell-access)
     - [Mysql Tuner](#mysql-tuner)
-   - [References](#references)
+- [References](#references)
 
-# Prerequisites
+## Prerequisites
 
 
-# Installation
+## Installation
 
 Automated builds of the image are available on [Docker Hub](https://hub.docker.com/r/tiredofit/mariadb) and is the recommended method of installation.
 
@@ -63,39 +64,39 @@ Automated builds of the image are available on [Docker Hub](https://hub.docker.c
 docker pull tiredofit/mariadb
 ```
 
-# Quick Start
+### Quick Start
 
 * The quickest way to get started is using [docker-compose](https://docs.docker.com/compose/). See the examples folder for a working [docker-compose.yml](/examples/docker-compose.yml) that can be modified for development or production use.
 
 * Set various [environment variables](#environment-variables) to understand the capabilities of this image.
 * Map [persistent storage](#data-volumes) for access to configuration and data files for backup.
 
-# Configuration
+## Configuration
 
 ### Data-Volumes
 
 The following directories are used for configuration and can be mapped for persistent storage.
 
-| Directory | Description |
-|-----------|-------------|
-| `/var/lib/mysql` | MySQL Data Directory |
+| Directory           | Description                                                    |
+| ------------------- | -------------------------------------------------------------- |
+| `/var/lib/mysql`    | MySQL Data Directory                                           |
 | `/etc/mysql/conf.d` | Optional directory to put .cnf files for additional directives |
-| `/backup` | Optional directory for backups |
+| `/backup`           | Optional directory for backups                                 |
 
 ### Environment Variables
 
 Along with the Environment Variables from the [Base image](https://hub.docker.com/r/tiredofit/alpine), below is the complete list of available options that can be used to customize your installation.
 
-| Parameter | Description |
-|-----------|-------------|
-| `CHARACTER_SET` | Set Default Character Set - Default `utf8mb4` |
-| `COLLATION` | Set Default Collation - Default `utf8mb4_general_ci` |
-| `ROOT_PASS` | Root Password for Instance (e.g. password) |
-| `DB_AUTO_UPGRADE` | If MariaDB has changed from first time image has been used, automatically upgrade DBs and tables to latest versions - `TRUE` / `FALSE - Default: `TRUE` |
-| `DB_CONFIGURATION` | Type of Configuration - `standard`, or `default` - Default - `standard` |
-| `DB_NAME` | Optional - Automatically Create Database - Seperate with commas for multiple databases |
-| `DB_USER` | Optional - Automatically Assign Username Priveleges to Database (e.g. `mysqluser`) |
-| `DB_PASS` | Password for authentication to above database (e.g. `password`) |
+| Parameter          | Description                                                                                                                                             |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CHARACTER_SET`    | Set Default Character Set - Default `utf8mb4`                                                                                                           |
+| `COLLATION`        | Set Default Collation - Default `utf8mb4_general_ci`                                                                                                    |
+| `ROOT_PASS`        | Root Password for Instance (e.g. password)                                                                                                              |
+| `DB_AUTO_UPGRADE`  | If MariaDB has changed from first time image has been used, automatically upgrade DBs and tables to latest versions - `TRUE` / `FALSE - Default: `TRUE` |
+| `DB_CONFIGURATION` | Type of Configuration - `standard`, or `default` - Default - `standard`                                                                                 |
+| `DB_NAME`          | Optional - Automatically Create Database - Seperate with commas for multiple databases                                                                  |
+| `DB_USER`          | Optional - Automatically Assign Username Priveleges to Database (e.g. `mysqluser`)                                                                      |
+| `DB_PASS`          | Password for authentication to above database (e.g. `password`)                                                                                         |
 
 * With regards to `DB_CONFIGURATION`
   - `default` - Means the default my.cnf file from MariaDB
@@ -104,31 +105,31 @@ Along with the Environment Variables from the [Base image](https://hub.docker.co
 This image can also backup databases on a scheduled basis as well. These environment variables are:
 
 
-| Parameter | Description |
-|-----------|-------------|
-| `DB_BACKUP` | Enable `TRUE` or disable `FALSE` embedded backup routines - Default `FALSE` |
-| `DB_BACKUP_COMPRESSION` | Use either Gzip `GZ`, Bzip2 `BZ`, XZip `XZ`, or none `NONE` - Default `GZ`
-| `DB_BACKUP_DUMP_FREQ` | How often to do a dump, in minutes. Defaults to 1440 minutes, or once per day.
-| `DB_BACKUP_DUMP_BEGIN` | What time to do the first dump. Defaults to immediate. Must be in one of two formats
-| | Absolute HHMM, e.g. `2330` or `0415`
-| | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half
-| `DB_BACKUP_CLEANUP_TIME` | Value in minutes to delete old backups (only fired when dump freqency fires). 1440 would delete anything above 1 day old. You don't need to set this variable if you want to hold onto everything.
-| `DB_BACKUP_MD5` | Generate MD5 Sum in Directory, `TRUE` or `FALSE` - Default `TRUE`
-| `DB_BACKUP_PARALLEL_COMPRESSION` | Use multiple cores when compressing backups `TRUE` or `FALSE` - Default `TRUE` |
-| `DB_BACKUP_SPLIT_DB` | If using root as username and multiple DBs on system, set to TRUE to create Seperate DB Backups instead of all in one. - Default `FALSE` |
+| Parameter                        | Description                                                                                                                                                                                        |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DB_BACKUP`                      | Enable `TRUE` or disable `FALSE` embedded backup routines - Default `FALSE`                                                                                                                        |
+| `DB_BACKUP_COMPRESSION`          | Use either Gzip `GZ`, Bzip2 `BZ`, XZip `XZ`, or none `NONE` - Default `GZ`                                                                                                                         |
+| `DB_BACKUP_DUMP_FREQ`            | How often to do a dump, in minutes. Defaults to 1440 minutes, or once per day.                                                                                                                     |
+| `DB_BACKUP_DUMP_BEGIN`           | What time to do the first dump. Defaults to immediate. Must be in one of two formats                                                                                                               |
+|                                  | Absolute HHMM, e.g. `2330` or `0415`                                                                                                                                                               |
+|                                  | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half                                                     |
+| `DB_BACKUP_CLEANUP_TIME`         | Value in minutes to delete old backups (only fired when dump freqency fires). 1440 would delete anything above 1 day old. You don't need to set this variable if you want to hold onto everything. |
+| `DB_BACKUP_MD5`                  | Generate MD5 Sum in Directory, `TRUE` or `FALSE` - Default `TRUE`                                                                                                                                  |
+| `DB_BACKUP_PARALLEL_COMPRESSION` | Use multiple cores when compressing backups `TRUE` or `FALSE` - Default `TRUE`                                                                                                                     |
+| `DB_BACKUP_SPLIT_DB`             | If using root as username and multiple DBs on system, set to TRUE to create Seperate DB Backups instead of all in one. - Default `FALSE`                                                           |
 
 ### Networking
 
 The following ports are exposed.
 
-| Port      | Description |
-|-----------|-------------|
-| `3306`    | MariaDB Server |  
+| Port   | Description    |
+| ------ | -------------- |
+| `3306` | MariaDB Server |
 
-# Maintenance
-#### Shell Access
+## Maintenance
+### Shell Access
 
-For debugging and maintenance purposes you may want access the containers shell. 
+For debugging and maintenance purposes you may want access the containers shell.
 
 ```bash
 docker exec -it (whatever your container name is e.g. mariadb) bash
@@ -139,6 +140,7 @@ docker exec -it (whatever your container name is e.g. mariadb) bash
 This image comes with [Mysql Tuner](https://github.com/major/MySQLTuner-perl). Simply enter inside the container and execute `mysql-tuner` along with your arguments.
 
 Manual Backups can be perforemd by entering the container and typing `backup-now`
-# References
+
+## References
 
 * https://mariadb.org

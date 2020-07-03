@@ -1,3 +1,9 @@
+## 3.5.1 2020-07-03 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Cleanup code as per shellcheck warnings
+
+
 ## 3.5.0 2020-06-09 <dave at tiredofit dot ca>
 
    ### Added

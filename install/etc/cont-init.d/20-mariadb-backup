@@ -7,7 +7,7 @@ PROCESS_NAME="mariadb-backup"
 DB_BACKUP=${DB_BACKUP="FALSE"}
 
 ### Enable or Disable the DB Backup Script
-if [ "$DB_BACKUP" != "TRUE" ] || [ "$DB_BACKUP" != "true" ]; then
+if [ "$DB_BACKUP" != "TRUE" ] && [ "$DB_BACKUP" != "true" ]; then
     print_notice "Disabling Scheduled Backups"
     service_stop 20-mariadb-backup
 fi
