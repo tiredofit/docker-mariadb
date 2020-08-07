@@ -51,21 +51,21 @@ if [ -d /var/lib/mysql/mysql ]; then
 
   if [ ! -f "/var/lib/mysql/.version" ]; then
     print_warn "Detected MariaDB data originally created with another Docker Image. Adding Auto Upgrade support"
-    echo $MARIADB_VERSION 'first used on previously in place databases on '`date`> /var/lib/mysql/.version
+    echo "$MARIADB_VERSION" 'first used on previously in place databases on '$(date)> /var/lib/mysql/.version
     if [ "$DB_AUTO_UPGRADE" = "TRUE" ] || [ "$DB_AUTO_UPGRADE" = "false" ]; then
         print_warn "Upgrading Databases to $MARIADB_VERSION format"
         /usr/bin/mysqld --defaults-file=/etc/mysql/my.cnf --user=mariadb --skip-name-resolve > /dev/null 2>&1 &
         sleep 10
         mysql_upgrade -uroot -p${ROOT_PASS} --silent
         mysqladmin -uroot -p${ROOT_PASS} shutdown
-        echo $MARIADB_VERSION 'upgraded on '`date` | cat - /var/lib/mysql/.version > /tmp/.version && mv /tmp/.version /var/lib/mysql/.version
+        echo "$MARIADB_VERSION" 'upgraded on '$(date) | cat - /var/lib/mysql/.version > /tmp/.version && mv /tmp/.version /var/lib/mysql/.version
     else
         print_warn "Skipping Upgrading Databases to $MARIADB_VERSION format"
     fi
   fi
 
-  if [ "$MARIADB_VERSION" != `head -n 1 /var/lib/mysql/.version | awk '{print $1'}` ]; then
-    print_warn "Previous MariaDB Version: "`head -n 1 /var/lib/mysql/.version | awk '{print $1}'`
+  if [ "$MARIADB_VERSION" != $(head -n 1 /var/lib/mysql/.version | awk '{print $1'}) ]; then
+    print_warn "Previous MariaDB Version: "$(head -n 1 /var/lib/mysql/.version | awk '{print $1}')
     print_warn "Image MariaDB Version: ${MARIADB_VERSION}"
       if [ "$DB_AUTO_UPGRADE" = "TRUE" ] || [ "$DB_AUTO_UPGRADE" = "false" ]; then
         print_warn "Upgrading Databases to $MARIADB_VERSION format"
@@ -73,7 +73,7 @@ if [ -d /var/lib/mysql/mysql ]; then
         sleep 10
         mysql_upgrade -uroot -p${ROOT_PASS} --silent
         mysqladmin -uroot -p${ROOT_PASS} shutdown
-        echo $MARIADB_VERSION 'upgraded on '`date` | cat - /var/lib/mysql/.version > /tmp/.version && mv /tmp/.version /var/lib/mysql/.version
+        echo "$MARIADB_VERSION" 'upgraded on '$(date) | cat - /var/lib/mysql/.version > /tmp/.version && mv /tmp/.version /var/lib/mysql/.version
       else
         print_warn "Skipping Upgrading Databases to $MARIADB_VERSION format"
       fi
@@ -89,7 +89,7 @@ else
 	mkdir -p /var/lib/mysql
   chown -R mariadb:mariadb /var/lib/mysql
   mysql_install_db --user=mariadb --basedir=/usr --datadir=/var/lib/mysql --defaults-file=/etc/mysql/my.cnf --auth-root-authentication-method=normal >/dev/null
-  INIT_FILE=`mktemp`
+  INIT_FILE=$(mktemp)
 
 cat <<EOSQL >"$INIT_FILE"
 USE mysql;
@@ -102,30 +102,30 @@ DROP DATABASE IF EXISTS test;
 EOSQL
 
   if [[ -n "${DB_USER}" && -n "${DB_NAME}" ]]; then
-    DATABASES=$(echo ${DB_NAME} | tr "," "\n")
+    DATABASES=$(echo "${DB_NAME}" | tr "," "\n")
 
     for DATABASE in ${DATABASES}
     do
       print_notice "Creating $DATABASE database"
-      echo "CREATE DATABASE IF NOT EXISTS \`${DATABASE}\` CHARACTER SET ${DB_CHARACTER_SET} COLLATE ${DB_COLLATION};" >> $INIT_FILE
-      echo "GRANT ALL ON \`${DATABASE}\`.* TO '${DB_USER}'@'%' IDENTIFIED BY '${DB_PASS}';" >> $INIT_FILE
-      echo "GRANT ALL ON \`${DATABASE}\`.* TO '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';" >> $INIT_FILE
+      echo "CREATE DATABASE IF NOT EXISTS \`${DATABASE}\` CHARACTER SET ${DB_CHARACTER_SET} COLLATE ${DB_COLLATION};" >> "$INIT_FILE"
+      echo "GRANT ALL ON \`${DATABASE}\`.* TO '${DB_USER}'@'%' IDENTIFIED BY '${DB_PASS}';" >> "$INIT_FILE"
+      echo "GRANT ALL ON \`${DATABASE}\`.* TO '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';" >> "$INIT_FILE"
     done
 
-    echo "FLUSH PRIVILEGES;" >> $INIT_FILE
+    echo "FLUSH PRIVILEGES;" >> "$INIT_FILE"
   fi
 
   if [[ -n "${DB_USER}" && -z "${DB_NAME}" ]]; then
      print_notice "Creating ${DB_USER} database"
-     echo "FLUSH PRIVILEGES;" >> $INIT_FILE
-     echo "CREATE DATABASE IF NOT EXISTS \`${DB_USER}\` CHARACTER SET ${DB_CHARACTER_SET} COLLATE ${DB_COLLATION};" >> $INIT_FILE
-     echo "GRANT ALL PRIVILEGES ON \`${DB_USER}\`.* TO '${DB_USER}'@'%' IDENTIFIED BY '${DB_PASS}';" >> $INIT_FILE
+     echo "FLUSH PRIVILEGES;" >> "$INIT_FILE"
+     echo "CREATE DATABASE IF NOT EXISTS \`${DB_USER}\` CHARACTER SET ${DB_CHARACTER_SET} COLLATE ${DB_COLLATION};" >> "$INIT_FILE"
+     echo "GRANT ALL PRIVILEGES ON \`${DB_USER}\`.* TO '${DB_USER}'@'%' IDENTIFIED BY '${DB_PASS}';" >> "$INIT_FILE"
   fi
 
-  chown -R mariadb:mariadb $INIT_FILE
-  /usr/bin/mysqld --user=mariadb --bootstrap --skip-name-resolve --skip-networking=0< $INIT_FILE
-  echo $MARIADB_VERSION 'first installed on '`date`> /var/lib/mysql/.version
-  rm -f $INIT_FILE
+  chown -R mariadb:mariadb "$INIT_FILE"
+  /usr/bin/mysqld --user=mariadb --bootstrap --skip-name-resolve --skip-networking=0< "$INIT_FILE"
+  echo "$MARIADB_VERSION" 'first installed on '$(date)> /var/lib/mysql/.version
+  rm -f "$INIT_FILE"
 fi
 
 liftoff

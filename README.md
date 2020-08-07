@@ -87,16 +87,17 @@ The following directories are used for configuration and can be mapped for persi
 
 Along with the Environment Variables from the [Base image](https://hub.docker.com/r/tiredofit/alpine), below is the complete list of available options that can be used to customize your installation.
 
-| Parameter          | Description                                                                                                                                             |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `CHARACTER_SET`    | Set Default Character Set - Default `utf8mb4`                                                                                                           |
-| `COLLATION`        | Set Default Collation - Default `utf8mb4_general_ci`                                                                                                    |
-| `ROOT_PASS`        | Root Password for Instance (e.g. password)                                                                                                              |
-| `DB_AUTO_UPGRADE`  | If MariaDB has changed from first time image has been used, automatically upgrade DBs and tables to latest versions - `TRUE` / `FALSE - Default: `TRUE` |
-| `DB_CONFIGURATION` | Type of Configuration - `standard`, or `default` - Default - `standard`                                                                                 |
-| `DB_NAME`          | Optional - Automatically Create Database - Seperate with commas for multiple databases                                                                  |
-| `DB_USER`          | Optional - Automatically Assign Username Priveleges to Database (e.g. `mysqluser`)                                                                      |
-| `DB_PASS`          | Password for authentication to above database (e.g. `password`)                                                                                         |
+
+| Parameter          | Description                                                                                                                            | Default              |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| `CHARACTER_SET`    | Set Default Character Set                                                                                                              | `utf8mb4`            |
+| `COLLATION`        | Set Default Collation                                                                                                                  | `utf8mb4_general_ci` |
+| `ROOT_PASS`        | Root Password for Instance (e.g. password)                                                                                             |                      |  |
+| `DB_AUTO_UPGRADE`  | If MariaDB has changed from first time image has been used, automatically upgrade DBs and tables to latest versions - `TRUE` / `FALSE` | `TRUE`               |
+| `DB_CONFIGURATION` | Type of Configuration - `standard`, or `default`                                                                                       | `standard`           |
+| `DB_NAME`          | Optional - Automatically Create Database - Seperate with commas for multiple databases                                                 |                      |
+| `DB_USER`          | Optional - Automatically Assign Username Priveleges to Database (e.g. `mysqluser`)                                                     |                      |
+| `DB_PASS`          | Password for authentication to above database (e.g.  `password`)                                                                       |                      |
 
 * With regards to `DB_CONFIGURATION`
   - `default` - Means the default my.cnf file from MariaDB
@@ -105,18 +106,18 @@ Along with the Environment Variables from the [Base image](https://hub.docker.co
 This image can also backup databases on a scheduled basis as well. These environment variables are:
 
 
-| Parameter                        | Description                                                                                                                                                                                        |
-| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DB_BACKUP`                      | Enable `TRUE` or disable `FALSE` embedded backup routines - Default `FALSE`                                                                                                                        |
-| `DB_BACKUP_COMPRESSION`          | Use either Gzip `GZ`, Bzip2 `BZ`, XZip `XZ`, or none `NONE` - Default `GZ`                                                                                                                         |
+| Parameter                        | Description                                                                                                                                                                                        | Default |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| `DB_BACKUP`                      | Enable `TRUE` or disable `FALSE` embedded backup routines                                                                                                                                          | `FALSE` |
+| `DB_BACKUP_COMPRESSION`          | Use either Gzip `GZ`, Bzip2 `BZ`, XZip `XZ`, or none `NONE`                                                                                                                                        | `GZ`    |
 | `DB_BACKUP_DUMP_FREQ`            | How often to do a dump, in minutes. Defaults to 1440 minutes, or once per day.                                                                                                                     |
 | `DB_BACKUP_DUMP_BEGIN`           | What time to do the first dump. Defaults to immediate. Must be in one of two formats                                                                                                               |
 |                                  | Absolute HHMM, e.g. `2330` or `0415`                                                                                                                                                               |
 |                                  | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half                                                     |
 | `DB_BACKUP_CLEANUP_TIME`         | Value in minutes to delete old backups (only fired when dump freqency fires). 1440 would delete anything above 1 day old. You don't need to set this variable if you want to hold onto everything. |
-| `DB_BACKUP_MD5`                  | Generate MD5 Sum in Directory, `TRUE` or `FALSE` - Default `TRUE`                                                                                                                                  |
-| `DB_BACKUP_PARALLEL_COMPRESSION` | Use multiple cores when compressing backups `TRUE` or `FALSE` - Default `TRUE`                                                                                                                     |
-| `DB_BACKUP_SPLIT_DB`             | If using root as username and multiple DBs on system, set to TRUE to create Seperate DB Backups instead of all in one. - Default `FALSE`                                                           |
+| `DB_BACKUP_MD5`                  | Generate MD5 Sum in Directory, `TRUE` or `FALSE`                                                                                                                                                   | `TRUE`  |
+| `DB_BACKUP_PARALLEL_COMPRESSION` | Use multiple cores when compressing backups `TRUE` or `FALSE`                                                                                                                                      | `TRUE`  |
+| `DB_BACKUP_SPLIT_DB`             | If using root as username and multiple DBs on system, set to TRUE to create Seperate DB Backups instead of all in one.                                                                             | `FALSE` |
 
 ### Networking
 
