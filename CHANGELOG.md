@@ -1,3 +1,9 @@
+## 3.6.3 2020-09-17 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Remove false error when backing up manually
+
+
 ## 3.6.2 2020-09-17 <dave at tiredofit dot ca>
 
    ### Changed

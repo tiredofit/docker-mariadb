@@ -5,7 +5,6 @@ PROCESS_NAME="mariadb-backup"
 
 check_container_initialized
 check_service_initialized init 10-mariadb
-liftoff
 
 if [ "$1" != "NOW" ]; then
     if [ ! -f /tmp/state/10-mariadb ]; then
@@ -34,6 +33,12 @@ TMPDIR=/tmp/backups
 if [ "$1" = "NOW" ]; then
     DB_BACKUP_DUMP_BEGIN=+0
     MANUAL=TRUE
+fi
+
+if var_true "${MANUAL}" ; then
+   :
+else
+   liftoff
 fi
 
 ### Set Compression Options
