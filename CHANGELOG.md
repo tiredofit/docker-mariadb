@@ -1,3 +1,9 @@
+## 3.6.2 2020-09-17 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Fix MariaDB backup script `backup-now`
+
+
 ## 3.6.1 2020-08-26 <dave at tiredofit dot ca>
 
    ### Added

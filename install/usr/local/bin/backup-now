@@ -1,5 +1,5 @@
 #!/usr/bin/with-contenv bash
 
 echo '** Performing Manual Backup'
-/etc/s6/services/20-mariadb-backup/run NOW
+/etc/services.available/20-mariadb-backup/run NOW
 
