@@ -163,5 +163,5 @@ RUN export CPU=`cat /proc/cpuinfo | grep -c processor` && \
 ### Networking
 EXPOSE 3306
 
-### Files Setup
-ADD install/ /
+### Add forlders
+ADD install /
