@@ -54,20 +54,20 @@ fi
 
 backup_mariadb() {
     if [ "$DB_BACKUP_SPLIT_DB" = "TRUE" ] || [ "$DB_BACKUP_SPLIT_DB" = "true" ];  then
-        DATABASES=$(mysql -u$DBUSER -p$DBPASS --batch -e "SHOW DATABASES;" | grep -v Database|grep -v schema)
+        DATABASES=$(mysql -u"$DBUSER" -p"$DBPASS" --batch -e "SHOW DATABASES;" | grep -v Database|grep -v schema)
 
         for db in $DATABASES; do
                 if [[ "$db" != "information_schema" ]] && [[ "$db" != _* ]] ; then
                     print_info "Dumping database: $db at $(date)"
                     TARGET=mariadb_${db}_${DBHOST}_${now}.sql
-                    mysqldump --max-allowed-packet=512M -u$DBUSER ${MARIADB_PASS_STR} --databases $db > ${TMPDIR}/"${TARGET}"
+                    mysqldump --max-allowed-packet=512M -u"$DBUSER" "${MARIADB_PASS_STR}" --databases "$db" > ${TMPDIR}/"${TARGET}"
                     generate_md5
                     compression
                     move_backup
                 fi
         done
     else
-        mysqldump --max-allowed-packet=512M -A -u$DBUSER ${MARIADB_PASS_STR} > ${TMPDIR}/"${TARGET}"
+        mysqldump --max-allowed-packet=512M -A -u"$DBUSER" "${MARIADB_PASS_STR}" > ${TMPDIR}/"${TARGET}"
         print_info "Dumping database: $DBNAME at $(date)"
         generate_md5
         compression
@@ -81,7 +81,7 @@ check_availability() {
         while true; do
             mysqlcmd='mysql -u'${DBUSER}' -p'${DBPASS}
             out="$($mysqlcmd -e "SELECT COUNT(*) FROM information_schema.FILES;" 2>&1)"
-            echo "$out" | grep -E "COUNT|Enter" 2>&1 > /dev/null
+            echo "$out" | grep -E "COUNT|Enter" > /dev/null 2>&1
             if [ $? -eq 0 ]; then
                 :
                 break
@@ -113,7 +113,7 @@ compression() {
 
 generate_md5() {
 if [ "$DB_BACKUP_MD5" = "TRUE" ] || [ "$DB_BACKUP_MD5" = "true" ] ;  then
-    cd $TMPDIR
+    cd $TMPDIR || exit
     md5sum "${TARGET}" > "${TARGET}".md5
 fi
 }
@@ -133,13 +133,13 @@ current_time=$(date +"%s")
 today=$(date +"%Y%m%d")
 
 if [[ $DB_BACKUP_DUMP_BEGIN =~ ^\+(.*)$ ]]; then
-    waittime=$(( ${BASH_REMATCH[1]} * 60 ))
+    waittime=$(( BASH_REMATCH[1] * 60 ))
 else
     target_time=$(date --date="${today}${DB_BACKUP_DUMP_BEGIN}" +"%s")
     if [[ "$target_time" < "$current_time" ]]; then
-        target_time=$(($target_time + 24*60*60))
+        target_time=$((target_time + 24*60*60))
     fi
-    waittime=$(($target_time - $current_time))
+    waittime=$((target_time - current_time))
 fi
 
 sleep $waittime
@@ -160,8 +160,8 @@ while true; do
 
     ### Zabbix
     if [ "$ENABLE_ZABBIX" = "TRUE" ] || [ "$ENABLE_ZABBIX" = "true" ];  then
-        silent zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k dbbackup.size -o $(stat -c%s "${DB_BACKUP_DUMP_TARGET}"/"${TARGET}")
-        silent zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k dbbackup.datetime -o $(date -r  "${DB_BACKUP_DUMP_TARGET}"/"${TARGET}" +'%s')
+        silent zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k dbbackup.size -o "$(stat -c%s "${DB_BACKUP_DUMP_TARGET}"/"${TARGET}")"
+        silent zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k dbbackup.datetime -o "$(date -r  "${DB_BACKUP_DUMP_TARGET}"/"${TARGET}" +'%s')"
     fi
 
     ### Automatic Cleanup
@@ -173,7 +173,7 @@ while true; do
     if [ "$MANUAL" = "TRUE" ]; then
         exit 1;
     else
-        sleep $(($DB_BACKUP_FREQ*60))
+        sleep $((DB_BACKUP_FREQ * 60))
     fi
 
 done
