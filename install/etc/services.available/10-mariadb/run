@@ -1,11 +1,13 @@
 #!/usr/bin/with-contenv bash
 
 source /assets/functions/00-container
+# shellcheck disable=SC2034
 PROCESS_NAME="mariadb"
 
 check_container_initialized
 check_service_initialized init
-liftoff
 
 print_info "Starting MariaDB ${MARIADB_VERSION}"
 silent exec /usr/bin/mysqld --defaults-file=/etc/mysql/my.cnf --user=mariadb --console --skip-name-resolve
+
+liftoff

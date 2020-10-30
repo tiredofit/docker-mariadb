@@ -2,9 +2,10 @@
 
 source /assets/functions/00-container
 prepare_service
+# shellcheck disable=SC2034
 PROCESS_NAME="mariadb"
 
-### Legacy Environment Variables Conversion
+### Legacy environment variables conversion
 if [ -n "$MYSQL_ROOT_PASSWORD" ]; then
   ROOT_PASS=${MYSQL_ROOT_PASSWORD}
 fi
@@ -38,49 +39,36 @@ mkdir -p /etc/mysql/conf.d
 sed -i -e "s/<CHARACTER_SET>/$DB_CHARACTER_SET/g" /etc/mysql/my.cnf
 sed -i -e "s/<COLLATION>/$DB_COLLATION/g" /etc/mysql/my.cnf
 
-### Allow Zabbix Monitoring
+### Allow zabbix monitoring
 sed -i -e "s/<ROOT_PASSWORD>/$ROOT_PASS/g" /etc/zabbix/.my.cnf
 chmod 0700 /etc/zabbix/.my.cnf
 chown -R zabbix /etc/zabbix
 
-### Permissions Fix
+### Permissions fix
 chmod -R 0644 /etc/mysql/
 
 if [ -d /var/lib/mysql/mysql ]; then
-	print_warn "MariaDB directory already present, skipping DB creation"
+	print_warn "MariaDB directory already present, skipping database creation"
+  touch /var/lib/mysql/.version
 
-  if [ ! -f "/var/lib/mysql/.version" ]; then
-    print_warn "Detected MariaDB data originally created with another Docker Image. Adding Auto Upgrade support"
-    echo "$MARIADB_VERSION" 'first used on previously in place databases on '$(date)> /var/lib/mysql/.version
-    if [ "$DB_AUTO_UPGRADE" = "TRUE" ] || [ "$DB_AUTO_UPGRADE" = "false" ]; then
-        print_warn "Upgrading Databases to $MARIADB_VERSION format"
-        /usr/bin/mysqld --defaults-file=/etc/mysql/my.cnf --user=mariadb --skip-name-resolve > /dev/null 2>&1 &
-        sleep 10
-        mysql_upgrade -uroot -p${ROOT_PASS} --silent
-        mysqladmin -uroot -p${ROOT_PASS} shutdown
-        echo "$MARIADB_VERSION" 'upgraded on '$(date) | cat - /var/lib/mysql/.version > /tmp/.version && mv /tmp/.version /var/lib/mysql/.version
+  if [ "$MARIADB_VERSION" != "$(head -n 1 /var/lib/mysql/.version | awk '{print $1}')" ]; then
+    print_warn "Installed version: ""$(head -n 1 /var/lib/mysql/.version | awk '{print $1}')"", but image version: ""${MARIADB_VERSION}"
+    if var_true "$DB_AUTO_UPGRADE" ; then
+      print_warn "Upgrading databases to $MARIADB_VERSION version"
+      /usr/bin/mysqld --defaults-file=/etc/mysql/my.cnf --user=mariadb --skip-name-resolve > /dev/null 2>&1 &
+
+      ### Check database ready
+      sanity_db
+      db_ready mariadb
+
+      mysql_upgrade -uroot -p"${ROOT_PASS}" --silent
+      mysqladmin -uroot -p"${ROOT_PASS}" shutdown
+      echo "$MARIADB_VERSION" 'upgraded on '"$(date)" | cat - /var/lib/mysql/.version > /tmp/.version && mv /tmp/.version /var/lib/mysql/.version
     else
-        print_warn "Skipping Upgrading Databases to $MARIADB_VERSION format"
+      print_warn "Skipping upgrading databases to $MARIADB_VERSION version"
     fi
   fi
-
-  if [ "$MARIADB_VERSION" != $(head -n 1 /var/lib/mysql/.version | awk '{print $1'}) ]; then
-    print_warn "Previous MariaDB Version: "$(head -n 1 /var/lib/mysql/.version | awk '{print $1}')
-    print_warn "Image MariaDB Version: ${MARIADB_VERSION}"
-      if [ "$DB_AUTO_UPGRADE" = "TRUE" ] || [ "$DB_AUTO_UPGRADE" = "false" ]; then
-        print_warn "Upgrading Databases to $MARIADB_VERSION format"
-        /usr/bin/mysqld --defaults-file=/etc/mysql/my.cnf --user=mariadb --skip-name-resolve > /dev/null 2>&1 &
-        sleep 10
-        mysql_upgrade -uroot -p${ROOT_PASS} --silent
-        mysqladmin -uroot -p${ROOT_PASS} shutdown
-        echo "$MARIADB_VERSION" 'upgraded on '$(date) | cat - /var/lib/mysql/.version > /tmp/.version && mv /tmp/.version /var/lib/mysql/.version
-      else
-        print_warn "Skipping Upgrading Databases to $MARIADB_VERSION format"
-      fi
-  fi
-
   chown -R mariadb:mariadb /var/lib/mysql
-
 else
 	print_warn "MariaDB data directory is not found, creating initial DB(s)"
   sanity_var ROOT_PASS "Root Password"
@@ -88,7 +76,7 @@ else
 
 	mkdir -p /var/lib/mysql
   chown -R mariadb:mariadb /var/lib/mysql
-  mysql_install_db --user=mariadb --basedir=/usr --datadir=/var/lib/mysql --defaults-file=/etc/mysql/my.cnf --auth-root-authentication-method=normal >/dev/null
+  mysql_install_db --user=mariadb --basedir=/usr --datadir=/var/lib/mysql --defaults-file=/etc/mysql/my.cnf --auth-root-authentication-method=normal --innodb-flush-method=fsync > /dev/null
   INIT_FILE=$(mktemp)
 
 cat <<EOSQL >"$INIT_FILE"
@@ -107,9 +95,11 @@ EOSQL
     for DATABASE in ${DATABASES}
     do
       print_notice "Creating $DATABASE database"
-      echo "CREATE DATABASE IF NOT EXISTS \`${DATABASE}\` CHARACTER SET ${DB_CHARACTER_SET} COLLATE ${DB_COLLATION};" >> "$INIT_FILE"
-      echo "GRANT ALL ON \`${DATABASE}\`.* TO '${DB_USER}'@'%' IDENTIFIED BY '${DB_PASS}';" >> "$INIT_FILE"
-      echo "GRANT ALL ON \`${DATABASE}\`.* TO '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';" >> "$INIT_FILE"
+      {
+        echo "CREATE DATABASE IF NOT EXISTS \`${DATABASE}\` CHARACTER SET ${DB_CHARACTER_SET} COLLATE ${DB_COLLATION};"
+        echo "GRANT ALL ON \`${DATABASE}\`.* TO '${DB_USER}'@'%' IDENTIFIED BY '${DB_PASS}';"
+        echo "GRANT ALL ON \`${DATABASE}\`.* TO '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';"
+      } >> "$INIT_FILE"
     done
 
     echo "FLUSH PRIVILEGES;" >> "$INIT_FILE"
@@ -117,14 +107,16 @@ EOSQL
 
   if [[ -n "${DB_USER}" && -z "${DB_NAME}" ]]; then
      print_notice "Creating ${DB_USER} database"
-     echo "FLUSH PRIVILEGES;" >> "$INIT_FILE"
-     echo "CREATE DATABASE IF NOT EXISTS \`${DB_USER}\` CHARACTER SET ${DB_CHARACTER_SET} COLLATE ${DB_COLLATION};" >> "$INIT_FILE"
-     echo "GRANT ALL PRIVILEGES ON \`${DB_USER}\`.* TO '${DB_USER}'@'%' IDENTIFIED BY '${DB_PASS}';" >> "$INIT_FILE"
+     {
+       echo "FLUSH PRIVILEGES;"
+       echo "CREATE DATABASE IF NOT EXISTS \`${DB_USER}\` CHARACTER SET ${DB_CHARACTER_SET} COLLATE ${DB_COLLATION};"
+       echo "GRANT ALL PRIVILEGES ON \`${DB_USER}\`.* TO '${DB_USER}'@'%' IDENTIFIED BY '${DB_PASS}';"
+     } >> "$INIT_FILE"
   fi
 
   chown -R mariadb:mariadb "$INIT_FILE"
-  /usr/bin/mysqld --user=mariadb --bootstrap --skip-name-resolve --skip-networking=0< "$INIT_FILE"
-  echo "$MARIADB_VERSION" 'first installed on '$(date)> /var/lib/mysql/.version
+  /usr/bin/mysqld --user=mariadb --bootstrap --skip-name-resolve --skip-networking=0 < "$INIT_FILE"
+  echo "$MARIADB_VERSION" 'first installed on '"$(date)" > /var/lib/mysql/.version
   rm -f "$INIT_FILE"
 fi
 

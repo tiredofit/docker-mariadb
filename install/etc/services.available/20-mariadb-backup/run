@@ -1,34 +1,19 @@
 #!/usr/bin/with-contenv bash
 
 source /assets/functions/00-container
+# shellcheck disable=SC2034
 PROCESS_NAME="mariadb-backup"
 
 check_container_initialized
 check_service_initialized init 10-mariadb
 
 if [ "$1" != "NOW" ]; then
-    if [ ! -f /tmp/state/10-mariadb ]; then
+    if [ ! -f /tmp/state/10-mariadb-init ]; then
         print_error "MariaDB has not properly initialized!"
         exit 1
     fi
     sleep 10
 fi
-
-date >/dev/null
-
-### Set Defaults
-DB_BACKUP_COMPRESSION=${DB_BACKUP_COMPRESSION:-GZ}
-DB_BACKUP_PARALLEL_COMPRESSION=${DB_BACKUP_PARALLEL_COMPRESSION:-TRUE}
-DB_BACKUP_DUMP_FREQ=${DB_BACKUP_DUMP_FREQ:-1440}
-DB_BACKUP_DUMP_BEGIN=${DB_BACKUP_DUMP_BEGIN:-+0}
-DB_BACKUP_DUMP_TARGET=${DB_BACKUP_DUMP_TARGET:-/backup}
-DBNAME=${DB_NAME}
-DBPASS=${DB_PASS}
-DBUSER=${DB_USER}
-MARIADB_PASS_STR=" -p${DBPASS}"
-DB_BACKUP_MD5=${DB_BACKUP_MD5:-TRUE}
-DB_BACKUP_SPLIT_DB=${DB_BACKUP_SPLIT_DB:-FALSE}
-TMPDIR=/tmp/backups
 
 if [ "$1" = "NOW" ]; then
     DB_BACKUP_DUMP_BEGIN=+0
@@ -41,8 +26,8 @@ else
    liftoff
 fi
 
-### Set Compression Options
-if [ "$DB_BACKUP_PARALLEL_COMPRESSION" = "TRUE " ]; then
+### Set compression options
+if var_true "${DB_BACKUP_PARALLEL_COMPRESSION}" ; then
     BZIP="pbzip2"
     GZIP="pigz"
     XZIP="pixz"
@@ -53,57 +38,40 @@ else
 fi
 
 backup_mariadb() {
-    if [ "$DB_BACKUP_SPLIT_DB" = "TRUE" ] || [ "$DB_BACKUP_SPLIT_DB" = "true" ];  then
-        DATABASES=$(mysql -u$DBUSER -p$DBPASS --batch -e "SHOW DATABASES;" | grep -v Database|grep -v schema)
+    if var_true "${DB_BACKUP_SPLIT_DB}" ;  then
+        DATABASES=$(mysql -u"${DB_USER}" -p"${DB_PASS}" -h"${DB_HOST}" --batch -e "SHOW DATABASES;" | grep -v Database|grep -v schema)
 
         for db in $DATABASES; do
                 if [[ "$db" != "information_schema" ]] && [[ "$db" != _* ]] ; then
                     print_info "Dumping database: $db at $(date)"
-                    TARGET=mariadb_${db}_${DBHOST}_${now}.sql
-                    mysqldump --max-allowed-packet=512M -u$DBUSER ${MARIADB_PASS_STR} --databases $db > ${TMPDIR}/"${TARGET}"
+                    TARGET=mariadb_${db}_${DB_HOST}_${now}.sql
+                    mysqldump --max-allowed-packet=512M -u"${DB_USER}" -p"${DB_PASS}" -h"${DB_HOST}" --databases "$db" > "${TMPDIR}"/"${TARGET}"
                     generate_md5
                     compression
                     move_backup
                 fi
         done
     else
-        mysqldump --max-allowed-packet=512M -A -u$DBUSER ${MARIADB_PASS_STR} > ${TMPDIR}/"${TARGET}"
-        print_info "Dumping database: $DBNAME at $(date)"
+        mysqldump --max-allowed-packet=512M -A -u"$DB_USER" -p"${DB_PASS}" -h"${DB_HOST}" > "${TMPDIR}"/"${TARGET}"
+        print_info "Dumping database: ${DB_NAME} at $(date)"
         generate_md5
         compression
         move_backup
     fi
 }
 
-
-check_availability() {
-        COUNTER=0
-        while true; do
-            mysqlcmd='mysql -u'${DBUSER}' -p'${DBPASS}
-            out="$($mysqlcmd -e "SELECT COUNT(*) FROM information_schema.FILES;" 2>&1)"
-            echo "$out" | grep -E "COUNT|Enter" 2>&1 > /dev/null
-            if [ $? -eq 0 ]; then
-                :
-                break
-            fi
-            print_warn "MariaDB Server is not accessible, retrying.. ($COUNTER seconds so far)"
-            sleep 5
-            (( COUNTER+=5 ))
-        done
-}
-
 compression() {
-   case "$DB_BACKUP_COMPRESSION" in
+   case "${DB_BACKUP_COMPRESSION}" in
         "GZ" | "gz" | "gzip" | "GZIP")
-        $GZIP ${TMPDIR}/"${TARGET}"
+        $GZIP "${TMPDIR}"/"${TARGET}"
         TARGET=${TARGET}.gz
         ;;
         "BZ" | "bz" | "bzip2" | "BZIP2" | "bzip" | "BZIP" | "bz2" | "BZ2")
-        $BZIP ${TMPDIR}/"${TARGET}"
+        $BZIP "${TMPDIR}"/"${TARGET}"
         TARGET=${TARGET}.bz2
         ;;
         "XZ" | "xz" | "XZIP" | "xzip" )
-        $XZIP ${TMPDIR}/"${TARGET}"
+        $XZIP "${TMPDIR}"/"${TARGET}"
         TARGET=${TARGET}.xz
         ;;
         "NONE" | "none" | "FALSE" | "false")
@@ -112,68 +80,69 @@ compression() {
 }
 
 generate_md5() {
-if [ "$DB_BACKUP_MD5" = "TRUE" ] || [ "$DB_BACKUP_MD5" = "true" ] ;  then
-    cd $TMPDIR
+if var_true "${DB_BACKUP_MD5}" ;  then
+    cd "$TMPDIR" || exit
     md5sum "${TARGET}" > "${TARGET}".md5
 fi
 }
 
 move_backup() {
     mkdir -p "${DB_BACKUP_DUMP_TARGET}"
-    mv ${TMPDIR}/*.md5 "${DB_BACKUP_DUMP_TARGET}"/
-    mv ${TMPDIR}/"${TARGET}" "${DB_BACKUP_DUMP_TARGET}"/"${TARGET}"
+    mv "${TMPDIR}"/*.md5 "${DB_BACKUP_DUMP_TARGET}"/
+    mv "${TMPDIR}"/"${TARGET}" "${DB_BACKUP_DUMP_TARGET}"/"${TARGET}"
 }
 
+### Container startup
+print_info "Backup functionality initialized at $(date)"
 
-### Container Startup
-print_info "Backup Functionality initialized at $(date)"
-
-### Wait for Next time to start backup
+### Wait for next time to start backup
 current_time=$(date +"%s")
 today=$(date +"%Y%m%d")
 
-if [[ $DB_BACKUP_DUMP_BEGIN =~ ^\+(.*)$ ]]; then
-    waittime=$(( ${BASH_REMATCH[1]} * 60 ))
+if [[ ${DB_BACKUP_DUMP_BEGIN} =~ ^\+(.*)$ ]]; then
+    waittime=$(( BASH_REMATCH[1] * 60 ))
 else
     target_time=$(date --date="${today}${DB_BACKUP_DUMP_BEGIN}" +"%s")
     if [[ "$target_time" < "$current_time" ]]; then
-        target_time=$(($target_time + 24*60*60))
+        target_time=$((target_time + 24*60*60))
     fi
-    waittime=$(($target_time - $current_time))
+    waittime=$((target_time - current_time))
 fi
 
 sleep $waittime
 
-
-### Commence Backup
+### Commence backup
 while true; do
     # make sure the directory exists
-    mkdir -p $TMPDIR
+    mkdir -p "${TMPDIR}"
 
-    ### Define Target name
+    ### Define target name
     now=$(date +"%Y%m%d-%H%M%S")
-    TARGET=${DBTYPE}_${DBNAME}_${DBHOST}_${now}.sql
+    TARGET=${DB_TYPE}_${DB_NAME}_${DB_HOST}_${now}.sql
 
-    ### Take a Dump
-    check_availability
+    ### Check database ready
+    sanity_db
+    db_ready mariadb
+
+    ### Take a dump
     backup_mariadb
 
     ### Zabbix
-    if [ "$ENABLE_ZABBIX" = "TRUE" ] || [ "$ENABLE_ZABBIX" = "true" ];  then
-        silent zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k dbbackup.size -o $(stat -c%s "${DB_BACKUP_DUMP_TARGET}"/"${TARGET}")
-        silent zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k dbbackup.datetime -o $(date -r  "${DB_BACKUP_DUMP_TARGET}"/"${TARGET}" +'%s')
+    if var_true "${ENABLE_ZABBIX}" ;  then
+        silent zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k dbbackup.size -o "$(stat -c%s "${DB_BACKUP_DUMP_TARGET}"/"${TARGET}")"
+        silent zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k dbbackup.datetime -o "$(date -r  "${DB_BACKUP_DUMP_TARGET}"/"${TARGET}" +'%s')"
     fi
 
-    ### Automatic Cleanup
-    if [[ -n "$DB_BACKUP_CLEANUP_TIME" ]]; then
-          find "$DB_BACKUP_DUMP_TARGET"/  -mmin +"$DB_BACKUP_CLEANUP_TIME" -iname "$DBTYPE_$DBNAME_*.*" -exec rm {} \;
+    ### Automatic cleanup
+    if [[ -n "${DB_BACKUP_CLEANUP_TIME}" ]]; then
+          find "$DB_BACKUP_DUMP_TARGET"/  -mmin +"$DB_BACKUP_CLEANUP_TIME" -iname """${DB_TYPE}""_""${DB_NAME}""_*.*" -exec rm {} \;
     fi
 
-    ### Go back to Sleep until next Backup time
+    ### Go back to sleep until next backup time
     if [ "$MANUAL" = "TRUE" ]; then
         exit 1;
     else
-        sleep $(($DB_BACKUP_FREQ*60))
+        sleep $((DB_BACKUP_DUMP_FREQ * 60))
     fi
 
 done
