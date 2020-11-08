@@ -1,3 +1,15 @@
+## 3.7.0 2020-10-30 <rusxakep@github>
+
+   ### Added
+      - MariaDB 10.5.7
+\
+   ### Changed
+      - Shellcheck fixes
+      - CRLF fixes
+      - Remove duplicate variables
+      - Set defaults for mariadb-backup component
+      - Remove old code and convert to new sanity_var / db_ready functions
+
 ## 3.6.4 2020-10-30 <dave at tiredofit dot ca>
 
    ### Added
