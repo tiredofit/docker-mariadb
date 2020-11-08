@@ -1,6 +1,7 @@
 #!/usr/bin/with-contenv bash
 
 source /assets/functions/00-container
+# shellcheck disable=SC2034
 PROCESS_NAME="mariadb"
 
 check_container_initialized

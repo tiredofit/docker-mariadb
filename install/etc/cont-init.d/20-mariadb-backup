@@ -2,13 +2,12 @@
 
 source /assets/functions/00-container
 prepare_service
+# shellcheck disable=SC2034
 PROCESS_NAME="mariadb-backup"
 
-DB_BACKUP=${DB_BACKUP="FALSE"}
-
-### Enable or Disable the DB Backup Script
-if [ "$DB_BACKUP" != "TRUE" ] && [ "$DB_BACKUP" != "true" ]; then
-    print_notice "Disabling Scheduled Backups"
+### Enable or disable the database backup script
+if var_false "${DB_BACKUP}" ; then
+    print_notice "Disabling scheduled backups"
     service_stop 20-mariadb-backup
 fi
 
