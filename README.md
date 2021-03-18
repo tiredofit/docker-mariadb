@@ -1,6 +1,5 @@
 # github.com/tiredofit/docker-mariadb
 
-[![Build Status](https://img.shields.io/docker/build/tiredofit/mariadb.svg)](https://hub.docker.com/r/tiredofit/mariadb)
 [![Docker Pulls](https://img.shields.io/docker/pulls/tiredofit/mariadb.svg)](https://hub.docker.com/r/tiredofit/mariadb)
 [![Docker Stars](https://img.shields.io/docker/stars/tiredofit/mariadb.svg)](https://hub.docker.com/r/tiredofit/mariadb)
 [![Docker

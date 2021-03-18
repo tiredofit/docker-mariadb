@@ -1,3 +1,9 @@
+## 3.7.1 2021-03-18 <dave at tiredofit dot ca>
+
+   ### Added
+      - MariaDB 10.5.9
+
+
 ## 3.7.0 2020-10-30 <rusxakep@github>
 
    ### Added
