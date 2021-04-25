@@ -1,8 +1,8 @@
 FROM tiredofit/alpine:edge
 LABEL maintainer="Dave Conroy (dave at tiredofit dot ca)"
 
-ENV MARIADB_VERSION=10.5.5 \
-    MYSQLTUNER_VERSION=1.7.21 \
+ENV MARIADB_VERSION=10.5.9 \
+    MYSQLTUNER_VERSION=1.7.17 \
     ZABBIX_HOSTNAME=mariadb-db \
     ENABLE_SMTP=FALSE \
     ENABLE_CRON=FALSE
@@ -68,7 +68,6 @@ RUN export CPU=`cat /proc/cpuinfo | grep -c processor` && \
     # Build maridb
     mkdir -p /tmp/_ && \
     cd /usr/src/mariadb && \
-    sed -i 's/END()/ENDIF()/' libmariadb/cmake/ConnectorName.cmake && \
     cmake . \
         -DCMAKE_BUILD_TYPE=MinSizeRel \
         -DCOMMON_C_FLAGS="-O3 -s -fno-omit-frame-pointer -pipe" \
@@ -164,5 +163,5 @@ RUN export CPU=`cat /proc/cpuinfo | grep -c processor` && \
 ### Networking
 EXPOSE 3306
 
-### Files Setup
-ADD install/ /
+### Add folders
+ADD install /
