@@ -1,13 +1,15 @@
 # github.com/tiredofit/docker-mariadb
 
-[![Docker Pulls](https://img.shields.io/docker/pulls/tiredofit/mariadb.svg)](https://hub.docker.com/r/tiredofit/mariadb)
-[![Docker Stars](https://img.shields.io/docker/stars/tiredofit/mariadb.svg)](https://hub.docker.com/r/tiredofit/mariadb)
-[![Docker
-Layers](https://images.microbadger.com/badges/image/tiredofit/mariadb.svg)](https://microbadger.com/images/tiredofit/mariadb)
+[![GitHub release](https://img.shields.io/github/v/tag/tiredofit/docker-mariadb?style=flat-square)](https://github.com/tiredofit/docker-mariadb/releases/latest)
+[![Build Status](https://img.shields.io/github/workflow/status/tiredofit/docker-mariadb/build?style=flat-square)](https://github.com/tiredofit/docker-mariadb/actions?query=workflow%3Abuild)
+[![Docker Stars](https://img.shields.io/docker/stars/tiredofit/mariadb.svg?style=flat-square&logo=docker)](https://hub.docker.com/r/tiredofit/mariadb/)
+[![Docker Pulls](https://img.shields.io/docker/pulls/tiredofit/mariadb.svg?style=flat-square&logo=docker)](https://hub.docker.com/r/tiredofit/mariadb/)
+[![Become a sponsor](https://img.shields.io/badge/sponsor-tiredofit-181717.svg?logo=github&style=flat-square)](https://github.com/sponsors/tiredofit)
+[![Paypal Donate](https://img.shields.io/badge/donate-paypal-00457c.svg?logo=paypal&style=flat-square)](https://www.paypal.me/tiredofit)
 
-## Introduction
+## About
 
-Dockerfile to build a [MariaDB Server](https://mariadb.org) Image.
+This will build a Docker iamge for [MariaDB](https://mariadb.org). A relational database forked from MySQL.
 
 * Configuration tweaked to use all around settings for general usage - Can be changed
 * Can use official Mysql/MariaDB environment variables (MYSQL_USER, MYSQL_PASSWORD, MYSQL_ROOT_PASSWORD)
@@ -26,53 +28,61 @@ Also has the capability of backing up embedded in the container based on the [ti
 * select how often to run a dump
 * select when to start the first dump, whether time of day or relative to container start time
 
-* This Container uses a [customized Alpine Linux base](https://hub.docker.com/r/tiredofit/alpine) which includes [s6 overlay](https://github.com/just-containers/s6-overlay) enabled for PID 1 Init capabilities, [zabbix-agent](https://zabbix.org) for individual container monitoring, Cron also installed along with other tools (bash,curl, less, logrotate, mariadb-client, nano, vim) for easier management. It also supports sending to external SMTP servers..
-
-
-[Changelog](CHANGELOG.md)
-
-## Authors
+## Maintainer
 
 - [Dave Conroy](https://github.com/tiredofit)
 
 ## Table of Contents
 
-- [Introduction](#introduction)
-- [Authors](#authors)
+- [About](#about)
+- [Maintainer](#maintainer)
 - [Table of Contents](#table-of-contents)
-- [Prerequisites](#prerequisites)
 - [Installation](#installation)
-  - [Quick Start](#quick-start)
-- [Configuration](#configuration)
-  - [Data-Volumes](#data-volumes)
-  - [Environment Variables](#environment-variables)
-  - [Networking](#networking)
-- [Maintenance](#maintenance)
-  - [Shell Access](#shell-access)
-    - [Mysql Tuner](#mysql-tuner)
+  - [Build from Source](#build-from-source)
+  - [Prebuilt Images](#prebuilt-images)
+  - [Mysql Tuner](#mysql-tuner)
+  - [Manual Backups](#manual-backups)
+- [Contributions](#contributions)
+- [Support](#support)
+  - [Usage](#usage)
+  - [Bugfixes](#bugfixes)
+  - [Feature Requests](#feature-requests)
+  - [Updates](#updates)
+- [License](#license)
 - [References](#references)
-
-## Prerequisites
-
 
 ## Installation
 
-Automated builds of the image are available on [Docker Hub](https://hub.docker.com/r/tiredofit/mariadb) and is the recommended method of installation.
+### Build from Source
+Clone this repository and build the image with `docker build <arguments> (imagename) .`
+### Prebuilt Images
+Builds of the image are available on [Docker Hub](https://hub.docker.com/r/tiredofit/mariadb) and is the recommended method of installation.
 
 ```bash
-docker pull tiredofit/mariadb
+docker pull tiredofit/mariadb:(imagetag)
 ```
 
-### Quick Start
+The following image tags are available along with their tagged release based on what's written in the [Changelog](CHANGELOG.md):
 
-* The quickest way to get started is using [docker-compose](https://docs.docker.com/compose/). See the examples folder for a working [docker-compose.yml](/examples/docker-compose.yml) that can be modified for development or production use.
+| Version | Container OS | Tag       |
+| ------- | ------------ | --------- |
+| latest  | Alpine       | `:latest` |
+```
 
-* Set various [environment variables](#environment-variables) to understand the capabilities of this image.
-* Map [persistent storage](#data-volumes) for access to configuration and data files for backup.
+#### Multi Archictecture
+Images are built primarily for `amd64` architecture, and may also include builds for `arm/v6`, `arm/v7`, `arm64` and others. These variants are all unsupported. Consider [sponsoring](https://github.com/sponsors/tiredofit) my work so that I can work with various hardware. To see if this image supports multiple architecures, type `docker manifest (image):(tag)`
 
 ## Configuration
 
-### Data-Volumes
+### Quick Start
+
+* The quickest way to get started is using [docker-compose](https://docs.docker.com/compose/). See the examples folder for a working [docker-compose.yml](examples/docker-compose.yml) that can be modified for development or production use.
+
+* Set various [environment variables](#environment-variables) to understand the capabilities of this image.
+* Map [persistent storage](#data-volumes) for access to configuration and data files for backup.
+- Make [networking ports](#networking) available for public access if necessary
+
+### Persistent Storage
 
 The following directories are used for configuration and can be mapped for persistent storage.
 
@@ -84,7 +94,15 @@ The following directories are used for configuration and can be mapped for persi
 
 ### Environment Variables
 
-Along with the Environment Variables from the [Base image](https://hub.docker.com/r/tiredofit/alpine), below is the complete list of available options that can be used to customize your installation.
+#### Base Images used
+
+This image relies on an [Alpine Linux](https://hub.docker.com/r/tiredofit/alpine) base image that relies on an [init system](https://github.com/just-containers/s6-overlay) for added capabilities. Outgoing SMTP capabilities are handlded via `msmtp`. Individual container performance monitoring is performed by [zabbix-agent](https://zabbix.org). Additional tools include: `bash`,`curl`,`less`,`logrotate`,`nano`,`vim`.
+
+Be sure to view the following repositories to understand all the customizable options:
+
+| Image                                                  | Description                            |
+| ------------------------------------------------------ | -------------------------------------- |
+| [OS Base](https://github.com/tiredofit/docker-alpine/) | Customized Image based on Alpine Linux |
 
 
 | Parameter          | Description                                                                                                                            | Default              |
@@ -102,8 +120,7 @@ Along with the Environment Variables from the [Base image](https://hub.docker.co
   - `default` - Means the default my.cnf file from MariaDB
   - `standard` - My own settings that I find work for my own DB servers.
 
-This image can also backup databases on a scheduled basis as well. These environment variables are:
-
+#### Backup Options
 
 | Parameter                        | Description                                                                                                                                                                                        | Default |
 | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
@@ -127,19 +144,45 @@ The following ports are exposed.
 | `3306` | MariaDB Server |
 
 ## Maintenance
-### Shell Access
+Inside the image are tools to perform modification on how the image runs.
 
+### Shell Access
 For debugging and maintenance purposes you may want access the containers shell.
 
 ```bash
-docker exec -it (whatever your container name is e.g. mariadb) bash
+docker exec -it (whatever your container name is e.g. nginx-php-fpm) bash
 ```
 
-#### Mysql Tuner
+### Mysql Tuner
 
 This image comes with [Mysql Tuner](https://github.com/major/MySQLTuner-perl). Simply enter inside the container and execute `mysql-tuner` along with your arguments.
 
+### Manual Backups
+
 Manual Backups can be perforemd by entering the container and typing `backup-now`
+## Contributions
+Welcomed. Please fork the repository and submit a [pull request](../../pulls) for any bug fixes, features or additions you propose to be included in the image. If it does not impact my intended usage case, it will be merged into the tree, tagged as a release and credit to the contributor in the [CHANGELOG](CHANGELOG).
+
+## Support
+
+These images were built to serve a specific need in a production environment and gradually have had more functionality added based on requests from the community.
+### Usage
+- The [Discussions board](../../discussions) is a great place for working with the community on tips and tricks of using this image.
+- Consider [sponsoring me](https://github.com/sponsors/tiredofit) personalized support.
+### Bugfixes
+- Please, submit a [Bug Report](issues/new) if something isn't working as expected. I'll do my best to issue a fix in short order.
+
+### Feature Requests
+- Feel free to submit a feature request, however there is no guarantee that it will be added, or at what timeline.
+- Consider [sponsoring me](https://github.com/sponsors/tiredofit) regarding development of features.
+
+### Updates
+- Best effort to track upstream changes, More priority if I am actively using the image in a production environment.
+- Consider [sponsoring me](https://github.com/sponsors/tiredofit) for up to date releases.
+
+## License
+MIT. See [LICENSE](LICENSE) for more details.
+
 
 ## References
 

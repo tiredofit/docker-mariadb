@@ -1,7 +1,7 @@
 FROM tiredofit/alpine:edge
 LABEL maintainer="Dave Conroy (dave at tiredofit dot ca)"
 
-ENV MARIADB_VERSION=10.5.9 \
+ENV MARIADB_VERSION=10.5.10 \
     MYSQLTUNER_VERSION=1.7.21 \
     ZABBIX_HOSTNAME=mariadb-db \
     ENABLE_SMTP=FALSE \
@@ -17,44 +17,44 @@ RUN export CPU=`cat /proc/cpuinfo | grep -c processor` && \
     \
     # Install Dependencies
     apk add -t .mariadb-builddeps \
-            alpine-sdk \
-            bison \
-            boost-dev \
-            bzip2-dev \
-            cmake \
-            curl-dev \
-            gnutls-dev \
-            libaio-dev \
-            lzo-dev \
-            lz4-dev \
-            openssl-dev \
-            libxml2-dev \
-            linux-headers \
-            ncurses-dev \
-            && \
+                alpine-sdk \
+                bison \
+                boost-dev \
+                bzip2-dev \
+                cmake \
+                curl-dev \
+                gnutls-dev \
+                libaio-dev \
+                libxml2-dev \
+                linux-headers \
+                lz4-dev \
+                lzo-dev \
+                ncurses-dev \
+                openssl-dev \
+                && \
     \
     apk add -t .mariadb-rundeps \
-            boost \
-            bzip2 \
-            geos \
-            gnutls \
-            ncurses-libs \
-            libaio \
-            libcurl \
-            lzo \
-            lz4 \
-            lz4-libs \
-            openssl \
-            libstdc++ \
-            libxml2 \
-            perl \
-            perl-doc \
-            pigz \
-            pixz \
-            proj \
-            pwgen \
-            xz \
-            && \
+                boost \
+                bzip2 \
+                geos \
+                gnutls \
+                ncurses-libs \
+                libaio \
+                libcurl \
+                lzo \
+                lz4 \
+                lz4-libs \
+                openssl \
+                libstdc++ \
+                libxml2 \
+                perl \
+                perl-doc \
+                pigz \
+                pixz \
+                proj \
+                pwgen \
+                xz \
+                && \
     \
     # Add group and user for mysql
     addgroup -S -g 3306 mariadb && \
@@ -113,10 +113,10 @@ RUN export CPU=`cat /proc/cpuinfo | grep -c processor` && \
         -DENABLED_PROFILING=OFF \
         -DENABLE_DEBUG_SYNC=OFF \
         && \
-    make -j${CPU} && \
+    make -j$(getconf _NPROCESSORS_ONLN) && \
     \
     # Install
-    make -j${CPU} install && \
+    make install && \
     \
     # Patch for missing PAM Plugin
     sed -i 's/^.*auth_pam_tool_dir.*$/#auth_pam_tool_dir not exists/' /usr/bin/mysql_install_db && \
@@ -138,6 +138,13 @@ RUN export CPU=`cat /proc/cpuinfo | grep -c processor` && \
     make && \
     make install && \
     \
+    # Create needed directories and set permissions
+    mkdir -p /var/lib/mysql && \
+    mkdir -p /run/mysqld && \
+    mkdir /etc/mysql/conf.d && \
+    chown -R mariadb:mariadb /var/lib/mysql && \
+    chown -R mariadb:mariadb /run/mysqld && \
+    \
     # Clean everything
     rm -rf /usr/src/* && \
     rm -rf /tmp/_ && \
@@ -150,15 +157,6 @@ RUN export CPU=`cat /proc/cpuinfo | grep -c processor` && \
     \
     # Remove packages
     apk del .mariadb-builddeps && \
-    \
-    # Create needed directories
-    mkdir -p /var/lib/mysql && \
-    mkdir -p /run/mysqld && \
-    mkdir /etc/mysql/conf.d && \
-    \
-    # Set permissions
-    chown -R mariadb:mariadb /var/lib/mysql && \
-    chown -R mariadb:mariadb /run/mysqld && \
     rm -rf /var/cache/apk/*
 
 ### Networking
