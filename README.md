@@ -150,7 +150,7 @@ Inside the image are tools to perform modification on how the image runs.
 For debugging and maintenance purposes you may want access the containers shell.
 
 ```bash
-docker exec -it (whatever your container name is e.g. nginx-php-fpm) bash
+docker exec -it (whatever your container name is) bash
 ```
 
 ### Mysql Tuner

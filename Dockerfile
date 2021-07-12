@@ -1,11 +1,11 @@
 FROM tiredofit/alpine:edge
-LABEL maintainer="Dave Conroy (dave at tiredofit dot ca)"
+LABEL maintainer="Dave Conroy (github.com/tiredofit)"
 
-ENV MARIADB_VERSION=10.5.10 \
+ENV MARIADB_VERSION=10.5.11 \
     MYSQLTUNER_VERSION=1.7.21 \
     ZABBIX_HOSTNAME=mariadb-db \
-    ENABLE_SMTP=FALSE \
-    ENABLE_CRON=FALSE
+    CONTAINER_ENABLE_MESSAGING=FALSE \
+    CONTAINER_ENABLE_SCHEDULING=FALSE
 
 ### Install Required Dependencies
 RUN export CPU=`cat /proc/cpuinfo | grep -c processor` && \
