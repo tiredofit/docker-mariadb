@@ -1,3 +1,9 @@
+## 3.7.5 2021-07-19 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Switch to classic Zabbix Agent for now
+
+
 ## 3.7.4 2021-07-12 <dave at tiredofit dot ca>
 
    ### Added
