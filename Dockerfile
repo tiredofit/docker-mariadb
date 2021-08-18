@@ -1,7 +1,7 @@
 FROM tiredofit/alpine:edge
 LABEL maintainer="Dave Conroy (github.com/tiredofit)"
 
-ENV MARIADB_VERSION=10.6.3 \
+ENV MARIADB_VERSION=10.6.4 \
     MYSQLTUNER_VERSION=1.7.21 \
     ZABBIX_HOSTNAME=mariadb-db \
     ZABBIX_AGENT_TYPE=classic \
