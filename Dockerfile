@@ -3,7 +3,7 @@ LABEL maintainer="Dave Conroy (github.com/tiredofit)"
 
 ENV MARIADB_VERSION=10.6.4 \
     MYSQLTUNER_VERSION=1.7.21 \
-    ZABBIX_HOSTNAME=mariadb-db \
+    CONTAINER_NAME=mariadb-db \
     ZABBIX_AGENT_TYPE=classic \
     CONTAINER_ENABLE_MESSAGING=FALSE \
     CONTAINER_ENABLE_SCHEDULING=FALSE
@@ -148,7 +148,7 @@ RUN export CPU=`cat /proc/cpuinfo | grep -c processor` && \
     \
     # Clean everything
     rm -rf /usr/src/* && \
-    rm -rf /tmp/_ && \
+    rm -rf /tmp/* && \
     rm -rf /usr/sql-bench && \
     rm -rf /usr/mysql-test && \
     rm -rf /usr/data && \

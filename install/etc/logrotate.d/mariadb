@@ -1,0 +1,12 @@
+# logship: mariadb-error
+
+<LOG_PATH>/*.log {
+    su mariadb mariadb
+    daily
+    ifempty
+    rotate 7
+    missingok
+    compress
+    dateext
+    copytruncate
+}

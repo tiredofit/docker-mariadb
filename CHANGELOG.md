@@ -1,3 +1,11 @@
+## 3.9.0 2021-08-30 <dave at tiredofit dot ca>
+
+   ### Added
+      - Customizable logging support for error, general, and slow queries
+      - Enabled logrotation for logs
+      - Enabled fluent-bit log shipping parser for logs
+
+
 ## 3.8.1 2021-08-18 <dave at tiredofit dot ca>
 
    ### Added
@@ -38,7 +46,7 @@
 
    ### Added
       - MariaDB 10.5.7
-\
+
    ### Changed
       - Shellcheck fixes
       - CRLF fixes

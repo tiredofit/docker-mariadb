@@ -16,6 +16,7 @@ This will build a Docker iamge for [MariaDB](https://mariadb.org). A relational 
 * Allows for automatically creating multiple databases on container initialization
 * Automatic Table/DB Upgrade support if MariaDB version has changed
 * Includes MySQL Tuner inside image to optimize your configuration
+* Logging with automatic rotation
 * Zabbix Monitoring for metrics
 
 Also has the capability of backing up embedded in the container based on the [tiredofit/dbbackup](https://github.com/tiredofit/docker-db-backup) image which includes the following features:
@@ -40,6 +41,17 @@ Also has the capability of backing up embedded in the container based on the [ti
 - [Installation](#installation)
   - [Build from Source](#build-from-source)
   - [Prebuilt Images](#prebuilt-images)
+    - [Multi Archictecture](#multi-archictecture)
+- [Configuration](#configuration)
+  - [Quick Start](#quick-start)
+  - [Persistent Storage](#persistent-storage)
+  - [Environment Variables](#environment-variables)
+    - [Base Images used](#base-images-used)
+    - [Logging Options](#logging-options)
+    - [Backup Options](#backup-options)
+  - [Networking](#networking)
+- [Maintenance](#maintenance)
+  - [Shell Access](#shell-access)
   - [Mysql Tuner](#mysql-tuner)
   - [Manual Backups](#manual-backups)
 - [Contributions](#contributions)
@@ -67,7 +79,6 @@ The following image tags are available along with their tagged release based on 
 | Version | Container OS | Tag       |
 | ------- | ------------ | --------- |
 | latest  | Alpine       | `:latest` |
-```
 
 #### Multi Archictecture
 Images are built primarily for `amd64` architecture, and may also include builds for `arm/v6`, `arm/v7`, `arm64` and others. These variants are all unsupported. Consider [sponsoring](https://github.com/sponsors/tiredofit) my work so that I can work with various hardware. To see if this image supports multiple architecures, type `docker manifest (image):(tag)`
@@ -119,6 +130,20 @@ Be sure to view the following repositories to understand all the customizable op
 * With regards to `DB_CONFIGURATION`
   - `default` - Means the default my.cnf file from MariaDB
   - `standard` - My own settings that I find work for my own DB servers.
+
+#### Logging Options
+
+| Parameter                  | Description                                                  | Default          |
+| -------------------------- | ------------------------------------------------------------ | ---------------- |
+| `ENABLE_LOG_ERROR`         | Enable Error Logging                                         | `TRUE`           |
+| `ENABLE_LOG_GENERAL_QUERY` | Log all connections and queries to server (performance hit!) | `FALSE`          |
+| `ENABLE_SLOW_QUERY_LOG`    | Log all slow queries                                         | `FALSE`          |
+| `LOG_PATH`                 | Path where logs are stored                                   | `/logs/`         |
+| `LOG_FILE_ERROR`           | Error Log File Name                                          | `error.log`      |
+| `LOG_FILE_GENERAL_QUERY`   | General Query Log File name                                  | `general.log`    |
+| `LOG_FILE_SLOW_QUERY`      | Slow Query Log File Name                                     | `slow_query.log` |
+| `LOG_LEVEL`                | Log Level for warnings `0` to `9`                            | `3`              |
+
 
 #### Backup Options
 

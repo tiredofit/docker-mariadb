@@ -36,18 +36,53 @@ esac
 cp -R /assets/mariadb/$mysql_conf /etc/mysql/my.cnf
 mkdir -p /etc/mysql/conf.d
 
-sed -i -e "s/<CHARACTER_SET>/$DB_CHARACTER_SET/g" /etc/mysql/my.cnf
-sed -i -e "s/<COLLATION>/$DB_COLLATION/g" /etc/mysql/my.cnf
+sed -i -e "s|<CHARACTER_SET>|${DB_CHARACTER_SET}|g" /etc/mysql/my.cnf
+sed -i -e "s|<COLLATION>|${DB_COLLATION}|g" /etc/mysql/my.cnf
+
+### Logging
+if var_true "${ENABLE_LOG_ERROR}" || var_true "${ENABLE_LOG_GENERAL_QUERY}" || var_true "${ENABLE_LOG_SLOW_QUERY}" ; then
+  mkdir -p "${LOG_PATH}"
+  sed -i "s|<LOG_PATH>|${LOG_PATH}|g" /etc/logrotate.d/mariadb
+else
+  rm -rf /etc/logrotate.d/mariadb
+fi
+
+sed -i -e "s|<LOG_GENERAL>|${LOG_PATH}/${LOG_FILE_GENERAL_QUERY}|g" /etc/mysql/my.cnf
+sed -i -e "s|<LOG_SLOW_QUERY>|${LOG_PATH}${LOG_FILE_SLOW_QUERY}|g" /etc/mysql/my.cnf
+sed -i -e "s|log_warnings = .*|log_warnings = ${LOG_LEVEL}|g" /etc/mysql/my.cnf
+
+if var_true "${ENABLE_LOG_ERROR}" ; then
+  sed -i -e "s|<LOG_ERROR>|${LOG_PATH}/${LOG_FILE_ERROR}|g" /etc/mysql/my.cnf
+  touch "${LOG_PATH}"/"${LOG_FILE_ERROR}"
+else
+  sed -i -e "s|<LOG_ERROR>|/dev/null|g" /etc/mysql/my.cnf
+fi
+
+if var_true "${ENABLE_LOG_GENERAL_QUERY}" ; then
+  sed -i "s|general_log =.*|general_log = 1|g" /etc/mysql/my.cnf
+  touch "${LOG_PATH}"/"${LOG_FILE_GENERAL_QUERY}"
+fi
+
+if var_true "${ENABLE_LOG_SLOW_QUERY}" ; then
+  sed -i "s|slow_query_log_log =.*|slow_query_log = 1|g" /etc/mysql/my.cnf
+  touch "${LOG_PATH}"/"${LOG_FILE_SLOW_QUERY}"
+fi
+
+if [ -d "${LOG_PATH}" ] ; then
+  chown -R mariadb:mariadb "${LOG_PATH}"
+fi
 
 ### Allow zabbix monitoring
-sed -i -e "s/<ROOT_PASSWORD>/$ROOT_PASS/g" /etc/zabbix/.my.cnf
-chmod 0700 /etc/zabbix/.my.cnf
-chown -R zabbix /etc/zabbix
+if [ -n "${ROOT_PASS}" ] ; then
+  sed -i -e "s|<ROOT_PASSWORD>|${ROOT_PASS}|g" /etc/zabbix/.my.cnf
+  chmod 0700 /etc/zabbix/.my.cnf
+  chown -R zabbix /etc/zabbix
+fi
 
 ### Permissions fix
 chmod -R 0644 /etc/mysql/
 
-if [ -d /var/lib/mysql/mysql ]; then
+if [ -d "/var/lib/mysql/mysql" ]; then
 	print_warn "MariaDB directory already present, skipping database creation"
   touch /var/lib/mysql/.version
 
