@@ -1,3 +1,9 @@
+## 3.9.1 2021-09-01 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Modernize environment variables from upstream images
+
+
 ## 3.9.0 2021-08-30 <dave at tiredofit dot ca>
 
    ### Added
