@@ -1,3 +1,9 @@
+## 3.9.2 2021-09-01 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Fix Regex
+
+
 ## 3.9.1 2021-09-01 <dave at tiredofit dot ca>
 
    ### Changed
