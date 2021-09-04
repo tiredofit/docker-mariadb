@@ -54,6 +54,7 @@ sed -i -e "s|log_warnings = .*|log_warnings = ${LOG_LEVEL}|g" /etc/mysql/my.cnf
 if var_true "${ENABLE_LOG_ERROR}" ; then
   sed -i -e "s|<LOG_ERROR>|${LOG_PATH}/${LOG_FILE_ERROR}|g" /etc/mysql/my.cnf
   touch "${LOG_PATH}"/"${LOG_FILE_ERROR}"
+  create_logrotate mariadb-error ${LOG_PATH}/${LOG_FILE_ERROR} mariadb-error mariadb mariadb
 else
   sed -i -e "s|<LOG_ERROR>|/dev/null|g" /etc/mysql/my.cnf
 fi
@@ -61,11 +62,13 @@ fi
 if var_true "${ENABLE_LOG_GENERAL_QUERY}" ; then
   sed -i "s|general_log =.*|general_log = 1|g" /etc/mysql/my.cnf
   touch "${LOG_PATH}"/"${LOG_FILE_GENERAL_QUERY}"
+  create_logrotate mariadb-generalquery ${LOG_PATH}/${LOG_FILE_GENERAL_QUERY} none mariadb mariadb
 fi
 
 if var_true "${ENABLE_LOG_SLOW_QUERY}" ; then
   sed -i "s|slow_query_log_log =.*|slow_query_log = 1|g" /etc/mysql/my.cnf
   touch "${LOG_PATH}"/"${LOG_FILE_SLOW_QUERY}"
+  create_logrotate mariadb-slowquery ${LOG_PATH}/${LOG_FILE_SLOW_QUERY} none mariadb mariadb
 fi
 
 if [ -d "${LOG_PATH}" ] ; then
@@ -100,7 +103,7 @@ if [ -d "/var/lib/mysql/mysql" ]; then
       mysqladmin -uroot -p"${ROOT_PASS}" shutdown
       echo "$MARIADB_VERSION" 'upgraded on '"$(date)" | cat - /var/lib/mysql/.version > /tmp/.version && mv /tmp/.version /var/lib/mysql/.version
     else
-      print_warn "Skipping upgrading databases to $MARIADB_VERSION version"
+      print_warn "Skipping upgrading databases to ${MARIADB_VERSION} version"
     fi
   fi
   chown -R mariadb:mariadb /var/lib/mysql

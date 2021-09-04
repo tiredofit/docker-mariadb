@@ -1,3 +1,9 @@
+## 3.9.3 2021-09-04 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Change the way that logortate is configured for better parsing
+
+
 ## 3.9.2 2021-09-01 <dave at tiredofit dot ca>
 
    ### Changed
