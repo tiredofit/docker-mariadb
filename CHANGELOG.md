@@ -1,3 +1,10 @@
+## 3.10.0 2021-10-24 <dave at tiredofit dot ca>
+
+   ### Added
+      - Switch to Alpine 3.14 as base and dont rely on Edge
+      - Compile pixz instead of from packages
+
+
 ## 3.9.3 2021-09-04 <dave at tiredofit dot ca>
 
    ### Changed

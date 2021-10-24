@@ -1,4 +1,4 @@
-FROM tiredofit/alpine:edge
+FROM docker.io/tiredofit/alpine:3.14
 LABEL maintainer="Dave Conroy (github.com/tiredofit)"
 
 ENV MARIADB_VERSION=10.6.4 \
@@ -11,14 +11,15 @@ ENV MARIADB_VERSION=10.6.4 \
 ### Install Required Dependencies
 RUN export CPU=`cat /proc/cpuinfo | grep -c processor` && \
     \
-    # Add testing repo
-    echo "http://nl.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories && \
     apk update && \
     apk upgrade && \
     \
     # Install Dependencies
     apk add -t .mariadb-builddeps \
                 alpine-sdk \
+                asciidoc \
+                autoconf \
+                automake \
                 bison \
                 boost-dev \
                 bzip2-dev \
@@ -26,6 +27,7 @@ RUN export CPU=`cat /proc/cpuinfo | grep -c processor` && \
                 curl-dev \
                 gnutls-dev \
                 libaio-dev \
+                libarchive-dev \
                 libxml2-dev \
                 linux-headers \
                 lz4-dev \
@@ -41,6 +43,7 @@ RUN export CPU=`cat /proc/cpuinfo | grep -c processor` && \
                 gnutls \
                 ncurses-libs \
                 libaio \
+                libarchive \
                 libcurl \
                 lzo \
                 lz4 \
@@ -51,7 +54,6 @@ RUN export CPU=`cat /proc/cpuinfo | grep -c processor` && \
                 perl \
                 perl-doc \
                 pigz \
-                pixz \
                 proj \
                 pwgen \
                 xz \
@@ -137,6 +139,15 @@ RUN export CPU=`cat /proc/cpuinfo | grep -c processor` && \
     curl -ssL https://launchpad.net/pbzip2/1.1/1.1.13/+download/pbzip2-1.1.13.tar.gz | tar xvfz - --strip=1 -C /usr/src/pbzip2 && \
     cd /usr/src/pbzip2 && \
     make && \
+    make install && \
+    \
+    # Fetch and compile pixz 
+    mkdir -p /usr/src/pixz && \
+    cd /usr/src/pixz && \
+    git clone https://github.com/vasi/pixz.git /usr/src/pixz && \
+    ./autogen.sh && \
+    ./configure && \
+    make -j$(getconf _NPROCESSORS_ONLN) && \
     make install && \
     \
     # Create needed directories and set permissions
