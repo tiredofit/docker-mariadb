@@ -1,3 +1,10 @@
+## 3.10.1 2021-11-08 <dave at tiredofit dot ca>
+
+   ### Added
+      - MariaDB 10.6.5
+      - MySQLtuner 1.8.3
+
+
 ## 3.10.0 2021-10-24 <dave at tiredofit dot ca>
 
    ### Added
