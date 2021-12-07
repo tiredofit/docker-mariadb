@@ -85,6 +85,15 @@ fi
 ### Permissions fix
 chmod -R 0644 /etc/mysql/
 
+if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
+        source /assets/defaults/03-monitoring
+        cat <<EOF > "${ZABBIX_CONFIG_PATH}"/"${ZABBIX_CONFIG_FILE}.d"/tiredofit_mariadb.conf
+# Zabbix MariaDB Configuration - Automatically Generated
+# Find Companion Zabbix Server Templates at https://github.com/tiredofit/docker-mariadb
+# Autoregister=mariadb
+EOF
+fi
+
 if [ -d "/var/lib/mysql/mysql" ]; then
 	print_warn "MariaDB directory already present, skipping database creation"
   touch /var/lib/mysql/.version
