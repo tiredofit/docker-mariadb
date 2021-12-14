@@ -75,23 +75,50 @@ if [ -d "${LOG_PATH}" ] ; then
   chown -R mariadb:mariadb "${LOG_PATH}"
 fi
 
-### Allow zabbix monitoring
-if [ -n "${ROOT_PASS}" ] ; then
-  sed -i -e "s|<ROOT_PASSWORD>|${ROOT_PASS}|g" /etc/zabbix/.my.cnf
-  chmod 0700 /etc/zabbix/.my.cnf
-  chown -R zabbix /etc/zabbix
-fi
+
 
 ### Permissions fix
 chmod -R 0644 /etc/mysql/
 
-if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
+### Allow zabbix monitoring
+if [ -n "${ROOT_PASS}" ] ; then
+
+  if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
         source /assets/defaults/03-monitoring
-        cat <<EOF > "${ZABBIX_CONFIG_PATH}"/"${ZABBIX_CONFIG_FILE}.d"/tiredofit_mariadb.conf
+        case "${ZABBIX_AGENT_TYPE}" in
+        "1" | "c" | "classic" | "legacy" | "old" )
+            print_debug "Configuring classic Zabbix Agent"
+            sed -i -e "s|<ROOT_PASSWORD>|${ROOT_PASS}|g" /etc/zabbix/.my.cnf
+            chmod 0700 /etc/zabbix/.my.cnf
+            chown -R zabbix /etc/zabbix
+            mariadb_autoreg=mariadb-classic
+        ;;
+        "2" | "m" | "n" | "modern" | "new" )
+            print_debug "Configuring modern Zabbix agent"
+            mariadb_autoreg=mariadb
+mysql_config=$(cat<<EOF
+Plugins.Mysql.Sessions.toi.Uri=/run/mysqld/mysqld.sock
+Plugins.Mysql.Sessions.toi.User=root
+Plugins.Mysql.Sessions.toi.Password=${ROOT_PASS}
+EOF
+              )
+        ;;
+        * )
+            print_debug "No known Zabbix agent type selected"
+        ;;
+    esac
+
+    cat <<EOF > "${ZABBIX_CONFIG_PATH}"/"${ZABBIX_CONFIG_FILE}.d"/tiredofit_mariadb.conf
 # Zabbix MariaDB Configuration - Automatically Generated
 # Find Companion Zabbix Server Templates at https://github.com/tiredofit/docker-mariadb
-# Autoregister=mariadb
+# Autoregister=${mariadb_autoreg}
+
+${mysql_config}
 EOF
+
+  chmod 700 "${ZABBIX_CONFIG_PATH}"/"${ZABBIX_CONFIG_FILE}.d"/tiredofit_mariadb.conf
+  chown zabbix:root "${ZABBIX_CONFIG_PATH}"/"${ZABBIX_CONFIG_FILE}.d"/tiredofit_mariadb.conf
+  fi
 fi
 
 if [ -d "/var/lib/mysql/mysql" ]; then

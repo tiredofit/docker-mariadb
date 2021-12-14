@@ -1,3 +1,9 @@
+## 3.10.4 2021-12-13 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Prepare for Zabbix Agent 1/2 Switching
+
+
 ## 3.10.3 2021-12-07 <dave at tiredofit dot ca>
 
    ### Added
