@@ -1,4 +1,4 @@
-#!/usr/bin/with-contenv bash
+#!/command/with-contenv bash
 
 DB_AUTO_UPGRADE=${DB_AUTO_UPGRADE:-"TRUE"}
 DB_CHARACTER_SET=${DB_CHARACTER_SET:-"utf8mb4"}

@@ -6,7 +6,9 @@ ENV MARIADB_VERSION=10.6.5 \
     CONTAINER_NAME=mariadb-db \
     ZABBIX_AGENT_TYPE=classic \
     CONTAINER_ENABLE_MESSAGING=FALSE \
-    CONTAINER_ENABLE_SCHEDULING=FALSE
+    CONTAINER_ENABLE_SCHEDULING=FALSE \
+    IMAGE_NAME="tiredofit/mariadb" \
+    IMAGE_REPO_URL="https://github.com/tiredofit/docker-mariadb/"
 
 ### Install Required Dependencies
 RUN export CPU=`cat /proc/cpuinfo | grep -c processor` && \
