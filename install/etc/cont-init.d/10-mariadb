@@ -128,7 +128,7 @@ if [ -d "/var/lib/mysql/mysql" ]; then
   if [ "$MARIADB_VERSION" != "$(head -n 1 /var/lib/mysql/.version | awk '{print $1}')" ]; then
     print_warn "Installed version: ""$(head -n 1 /var/lib/mysql/.version | awk '{print $1}')"", but image version: ""${MARIADB_VERSION}"
     if var_true "$DB_AUTO_UPGRADE" ; then
-      print_warn "Upgrading databases to $MARIADB_VERSION version"
+      print_notice "Upgrading databases to $MARIADB_VERSION version"
       /usr/bin/mysqld --defaults-file=/etc/mysql/my.cnf --user=mariadb --skip-name-resolve > /dev/null 2>&1 &
 
       ### Check database ready

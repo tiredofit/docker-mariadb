@@ -1,3 +1,9 @@
+## 3.11.1 2022-03-04 <dave at tiredofit dot ca>
+
+   ### Added
+      - Switch from WARN to NOTICE when Databases are being upgraded
+
+
 ## 3.11.0 2022-02-17 <dave at tiredofit dot ca>
 
    ### Added
