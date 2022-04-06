@@ -1,3 +1,9 @@
+## 3.10.9 2022-04-06 <dave at tiredofit dot ca>
+
+   ### Added
+      - 10.4.24
+
+
 ## 3.10.8 2022-04-06 <dave at tiredofit dot ca>
 
    ### Added
