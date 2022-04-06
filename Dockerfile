@@ -1,7 +1,7 @@
 FROM docker.io/tiredofit/alpine:3.15
 LABEL maintainer="Dave Conroy (github.com/tiredofit)"
 
-ENV MARIADB_VERSION=10.6.7 \
+ENV MARIADB_VERSION=10.5.15 \
     MYSQLTUNER_VERSION=1.8.3 \
     CONTAINER_NAME=mariadb-db \
     ZABBIX_AGENT_TYPE=classic \
