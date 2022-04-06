@@ -8,7 +8,7 @@ check_container_initialized
 check_service_initialized init 10-mariadb
 
 if [ "$1" != "NOW" ]; then
-    if [ ! -f /tmp/state/10-mariadb ]; then
+    if [ ! -f /tmp/.container/10-mariadb ]; then
         print_error "MariaDB has not properly initialized!"
         exit 1
     fi
