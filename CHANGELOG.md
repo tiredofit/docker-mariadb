@@ -1,3 +1,9 @@
+## 3.10.8 2022-04-06 <dave at tiredofit dot ca>
+
+   ### Added
+      - Patchup for /tmp/state files location change
+
+
 ## 3.10.7 2022-03-04 <dave at tiredofit dot ca>
 
    ### Added
