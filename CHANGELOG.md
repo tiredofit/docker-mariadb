@@ -1,3 +1,10 @@
+## 3.10.11 2022-05-24 <dave at tiredofit dot ca>
+
+   ### Added
+      - MariaDB 10.3.35
+      - Alpine 3.16 base
+
+
 ## 3.10.10 2022-04-06 <dave at tiredofit dot ca>
 
    ### Added
