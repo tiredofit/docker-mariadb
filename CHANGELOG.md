@@ -1,3 +1,9 @@
+## 3.10.10 2022-05-25 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Bugfix in image name
+
+
 ## 3.10.9 2022-05-24 <dave at tiredofit dot ca>
 
    ### Added
