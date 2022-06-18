@@ -1,3 +1,8 @@
+## 3.10.12 2022-06-18 <dave at tiredofit dot ca>
+
+   ### Added
+
+
 ## 3.10.11 2022-06-18 <dave at tiredofit dot ca>
 
    ### Added
