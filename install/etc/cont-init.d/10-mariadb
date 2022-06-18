@@ -40,20 +40,18 @@ sed -i -e "s|<CHARACTER_SET>|${DB_CHARACTER_SET}|g" /etc/mysql/my.cnf
 sed -i -e "s|<COLLATION>|${DB_COLLATION}|g" /etc/mysql/my.cnf
 
 ### Logging
-if var_true "${ENABLE_LOG_ERROR}" || var_true "${ENABLE_LOG_GENERAL_QUERY}" || var_true "${ENABLE_LOG_SLOW_QUERY}" ; then
-  mkdir -p "${LOG_PATH}"
-  sed -i "s|<LOG_PATH>|${LOG_PATH}|g" /etc/logrotate.d/mariadb
-else
-  rm -rf /etc/logrotate.d/mariadb
-fi
+mkdir -p "${LOG_PATH}"
+chown -R mariadb:mariadb "${LOG_PATH}"
 
 sed -i -e "s|<LOG_GENERAL>|${LOG_PATH}/${LOG_FILE_GENERAL_QUERY}|g" /etc/mysql/my.cnf
 sed -i -e "s|<LOG_SLOW_QUERY>|${LOG_PATH}${LOG_FILE_SLOW_QUERY}|g" /etc/mysql/my.cnf
 sed -i -e "s|log_warnings = .*|log_warnings = ${LOG_LEVEL}|g" /etc/mysql/my.cnf
+sed -i "s|<SOCKET_PATH>|${SOCKET_PATH}|g" /etc/mysql/my.cnf
+sed -i "s|<SOCKET_FILE|${SOCKET_FILE}|g" /etc/mysql/my.cnf
 
 if var_true "${ENABLE_LOG_ERROR}" ; then
   sed -i -e "s|<LOG_ERROR>|${LOG_PATH}/${LOG_FILE_ERROR}|g" /etc/mysql/my.cnf
-  touch "${LOG_PATH}"/"${LOG_FILE_ERROR}"
+  sudo -u mariadb touch "${LOG_PATH}"/"${LOG_FILE_ERROR}"
   create_logrotate mariadb-error ${LOG_PATH}/${LOG_FILE_ERROR} mariadb-error mariadb mariadb
 else
   sed -i -e "s|<LOG_ERROR>|/dev/null|g" /etc/mysql/my.cnf
@@ -61,20 +59,15 @@ fi
 
 if var_true "${ENABLE_LOG_GENERAL_QUERY}" ; then
   sed -i "s|general_log =.*|general_log = 1|g" /etc/mysql/my.cnf
-  touch "${LOG_PATH}"/"${LOG_FILE_GENERAL_QUERY}"
+  sudo -u mariadb touch "${LOG_PATH}"/"${LOG_FILE_GENERAL_QUERY}"
   create_logrotate mariadb-generalquery ${LOG_PATH}/${LOG_FILE_GENERAL_QUERY} none mariadb mariadb
 fi
 
 if var_true "${ENABLE_LOG_SLOW_QUERY}" ; then
   sed -i "s|slow_query_log_log =.*|slow_query_log = 1|g" /etc/mysql/my.cnf
-  touch "${LOG_PATH}"/"${LOG_FILE_SLOW_QUERY}"
+  sudo -u mariadb touch "${LOG_PATH}"/"${LOG_FILE_SLOW_QUERY}"
   create_logrotate mariadb-slowquery ${LOG_PATH}/${LOG_FILE_SLOW_QUERY} none mariadb mariadb
 fi
-
-if [ -d "${LOG_PATH}" ] ; then
-  chown -R mariadb:mariadb "${LOG_PATH}"
-fi
-
 
 
 ### Permissions fix
