@@ -70,9 +70,6 @@ if var_true "${ENABLE_LOG_SLOW_QUERY}" ; then
 fi
 
 
-
-
-
 ### Permissions fix
 chmod -R 0644 /etc/mysql/
 
