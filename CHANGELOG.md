@@ -1,3 +1,9 @@
+## 3.10.11 2022-06-18 <dave at tiredofit dot ca>
+
+   ### Added
+      - Configurable Socket Path and File
+
+
 ## 3.10.10 2022-05-25 <dave at tiredofit dot ca>
 
    ### Changed
