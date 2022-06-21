@@ -1,3 +1,10 @@
+## 3.10.15 2022-06-21 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Remove zabbix static configuration
+      - Fix socket path and file
+
+
 ## 3.10.14 2022-06-18 <dave at tiredofit dot ca>
 
    ### Added
