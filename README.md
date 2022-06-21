@@ -41,7 +41,7 @@ Also has the capability of backing up embedded in the container based on the [ti
 - [Installation](#installation)
   - [Build from Source](#build-from-source)
   - [Prebuilt Images](#prebuilt-images)
-    - [Multi Architecture](#multi-archictecture)
+    - [Multi Architecture](#multi-architecture)
 - [Configuration](#configuration)
   - [Quick Start](#quick-start)
   - [Persistent Storage](#persistent-storage)
@@ -76,9 +76,15 @@ docker pull tiredofit/mariadb:(imagetag)
 
 The following image tags are available along with their tagged release based on what's written in the [Changelog](CHANGELOG.md):
 
-| Version | Container OS | Tag       |
-| ------- | ------------ | --------- |
-| latest  | Alpine       | `:latest` |
+| Version  | Container OS | Tag            |
+| -------- | ------------ | -------------- |
+| latest   | Alpine       | `:latest`      |
+| `10.8.x` | Alpine       | `:10.8-latest` |
+| `10.7.x` | Alpine       | `:10.7-latest` |
+| `10.6.x` | Alpine       | `:10.6-latest` |
+| `10.5.x` | Alpine       | `:10.5-latest` |
+| `10.4.x` | Alpine       | `:10.4-latest` |
+| `10.3.x` | Alpine       | `:10.3-latest` |
 
 #### Multi Architecture
 Images are built primarily for `amd64` architecture, and may also include builds for `arm/v7`, `arm64` and others. These variants are all unsupported. Consider [sponsoring](https://github.com/sponsors/tiredofit) my work so that I can work with various hardware. To see if this image supports multiple architecures, type `docker manifest (image):(tag)`
