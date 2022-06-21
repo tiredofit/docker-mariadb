@@ -1,3 +1,9 @@
+## 3.10.16 2022-06-21 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Zabbix Agent socket fix
+
+
 ## 3.10.15 2022-06-21 <dave at tiredofit dot ca>
 
    ### Changed
