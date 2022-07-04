@@ -1,3 +1,9 @@
+## 3.10.17 2022-07-04 <dave at tiredofit dot ca>
+
+   ### Added
+      - MySQLTuner 1.9.9
+
+
 ## 3.10.16 2022-06-21 <dave at tiredofit dot ca>
 
    ### Changed
