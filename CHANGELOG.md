@@ -1,3 +1,9 @@
+## 3.10.16 2022-08-26 <dave at tiredofit dot ca>
+
+   ### Added
+      - MariaDB 10.7.5
+
+
 ## 3.10.15 2022-07-04 <dave at tiredofit dot ca>
 
    ### Added
