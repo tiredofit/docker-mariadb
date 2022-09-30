@@ -1,3 +1,9 @@
+## 3.10.18 2022-09-30 <dave at tiredofit dot ca>
+
+   ### Added
+      - Add EXTRA_ARGUMENTS variable
+
+
 ## 3.10.17 2022-09-23 <dave at tiredofit dot ca>
 
    ### Added
