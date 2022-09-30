@@ -132,6 +132,7 @@ Be sure to view the following repositories to understand all the customizable op
 | `DB_NAME`          | Optional - Automatically Create Database - Seperate with commas for multiple databases                                                 |                      |
 | `DB_USER`          | Optional - Automatically Assign Username Priveleges to Database (e.g. `mysqluser`)                                                     |                      |
 | `DB_PASS`          | Password for authentication to above database (e.g.  `password`)                                                                       |                      |
+| `EXTRA_ARGUMENTS`  | Add extra arguments to the mariadb execution | |
 
 * With regards to `DB_CONFIGURATION`
   - `default` - Means the default my.cnf file from MariaDB
