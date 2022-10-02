@@ -1,3 +1,13 @@
+## 3.11.0 2022-10-02 <dave at tiredofit dot ca>
+
+   ### Added
+      - Add 60 seconds S6 Grace timeout to not destroy database writes and allow for safe shutdown
+      - Increase verbosity with EXTRA_ARGUMENTS command
+
+   ### Changed
+      - Rework version upgrades, only execute on MAJOR version changes, yet still log minor release changes
+
+
 ## 3.10.17 2022-09-30 <dave at tiredofit dot ca>
 
    ### Added

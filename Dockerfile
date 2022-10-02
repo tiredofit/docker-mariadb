@@ -3,6 +3,7 @@ LABEL maintainer="Dave Conroy (github.com/tiredofit)"
 
 ENV MARIADB_VERSION=10.5.17 \
     MYSQLTUNER_VERSION=v1.9.9 \
+    S6_SERVICES_GRACETIME=60000 \
     CONTAINER_NAME=mariadb-db \
     ZABBIX_AGENT_TYPE=classic \
     CONTAINER_ENABLE_MESSAGING=FALSE \
