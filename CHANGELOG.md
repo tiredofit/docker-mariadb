@@ -1,3 +1,9 @@
+## 3.12.2 2022-10-02 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Patchup for 3.12.1
+
+
 ## 3.12.1 2022-10-02 <dave at tiredofit dot ca>
 
    ### Changed
