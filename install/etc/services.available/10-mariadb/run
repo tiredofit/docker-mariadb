@@ -8,5 +8,6 @@ check_container_initialized
 check_service_initialized init
 liftoff
 
-print_start "Starting MariaDB ${MARIADB_VERSION}"
-silent exec /usr/bin/mysqld --defaults-file=/etc/mysql/my.cnf --user=mariadb --console --skip-name-resolve "${EXTRA_ARGUMENTS}"
+if [ -n "${EXTRA_ARGUMENTS}" ]; then start_string="with extra arguments '${EXTRA_ARGUMENTS}'" ; fi
+print_start "Starting MariaDB ${MARIADB_VERSION} ${start_string}"
+silent exec /usr/bin/mysqld --defaults-file=/etc/mysql/my.cnf --user=mariadb --console --skip-name-resolve ${EXTRA_ARGUMENTS}
