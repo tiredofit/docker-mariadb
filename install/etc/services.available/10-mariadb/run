@@ -1,0 +1,13 @@
+#!/command/with-contenv bash
+
+source /assets/functions/00-container
+# shellcheck disable=SC2034
+PROCESS_NAME="mariadb"
+
+check_container_initialized
+check_service_initialized init
+liftoff
+
+if [ -n "${EXTRA_ARGUMENTS}" ]; then start_string="with extra arguments '${EXTRA_ARGUMENTS}'" ; fi
+print_start "Starting MariaDB ${MARIADB_VERSION} ${start_string}"
+silent exec /usr/bin/mysqld --defaults-file=/etc/mysql/my.cnf --user=mariadb --console --skip-name-resolve ${EXTRA_ARGUMENTS}
