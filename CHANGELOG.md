@@ -1,4 +1,4 @@
-## 3.10.18 2022-10-02 <dave at tiredofit dot ca>
+## 3.11.0 2022-10-02 <dave at tiredofit dot ca>
 
    ### Added
       - Add 60 seconds S6 Grace timeout to not destroy database writes and allow for safe shutdown
