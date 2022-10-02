@@ -126,7 +126,6 @@ if [ -d "/var/lib/mysql/mysql" ]; then
 	print_warn "MariaDB directory already present, skipping database creation"
     touch /var/lib/mysql/.version
 
-set -x
     mariadb_run_major="$(echo ${MARIADB_VERSION} | cut -d . -f 1,2)"
     mariadb_file_major="$(head -n 1 /var/lib/mysql/.version | awk '{print $1}' | cut -d . -f 1,2)"
     if [ "${mariadb_run_major}" != "${mariadb_file_major}" ]; then
@@ -151,7 +150,7 @@ set -x
         print_warn "Installed version: '$(head -n 1 /var/lib/mysql/.version | awk '{print $1}')', but image version: '${MARIADB_VERSION}'"
         echo "${MARIADB_VERSION} started being used without executing 'mysql_upgrade' on $(TZ=${TIMEZONE} date +'%Y-%m-%d %H:%M:%S %Z')" | cat - /var/lib/mysql/.version > /tmp/.version && mv /tmp/.version /var/lib/mysql/.version
     fi
-set +x
+
     chown -R mariadb:mariadb /var/lib/mysql
 else
 	print_warn "MariaDB data directory is not found, creating initial DB(s)"
