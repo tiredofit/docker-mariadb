@@ -1,19 +1,19 @@
 [client]
 port = 3306
-socket = <SOCKET_PATH>/<SOCKET_FILE>
-default-character-set = <CHARACTER_SET>
+socket = {{SOCKET_PATH}}/{{SOCKET_FILE}}
+default-character-set = {{DB_CHARACTER_SET}}
 
 [mysqld_safe]
-socket = <SOCKET_PATH>/<SOCKET_FILE>
+socket = {{SOCKET_PATH}}/{{SOCKET_FILE}}
 nice = 0
 
 [mysqld]
-port = 3306
-socket = <SOCKET_PATH>/<SOCKET_FILE>
+port = {{LISTEN_PORT}}
+socket = {{SOCKET_PATH}}/{{SOCKET_FILE}}
 bulk_insert_buffer_size = 16M
 character-set-client-handshake = FALSE
-character-set-server = <CHARACTER_SET>
-collation-server = <COLLATION>
+character-set-server = {{DB_CHARACTER_SET}}
+collation-server = {{DB_COLLATION}}
 connect_timeout = 5
 max_connections = 100
 max_heap_table_size = 32M
@@ -34,11 +34,11 @@ read_buffer_size = 2M
 read_rnd_buffer_size = 1M
 skip-external-locking
 general_log = 0
-general_log_file = <LOG_GENERAL>
-log_error = <LOG_ERROR>
+general_log_file = {{LOG_PATH}}/{{LOG_FILE_GENERAL_QUERY}}
+log_error = {{LOG_PATH}}/{{LOG_FILE_ERROR}}
 log_warnings = 3
 slow_query_log = 0
-slow_query_log_file = <LOG_SLOW_QUERY>
+slow_query_log_file = {{LOG_PATH}}/{{LOG_FILE_SLOW_QUERY}}
 sort_buffer_size = 4M
 table_open_cache = 400
 
@@ -79,7 +79,7 @@ quote-names
 
 [mysql]
 no-auto-rehash
-default-character-set = <CHARACTER_SET>
+default-character-set = {{DB_CHARACTER_SET}}
 
 [myisamchk]
 key_buffer_size = 20M
