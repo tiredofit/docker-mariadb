@@ -1,17 +1,17 @@
 [client]
 port = 3306
-socket = <SOCKET_PATH>/<SOCKET_FILE>
-default-character-set = <CHARACTER_SET>
+socket = {{SOCKET_PATH}}/{{SOCKET_FILE}}
+default-character-set = {{DB_CHARACTER_SET}}
 
 [mysqld_safe]
-socket = <SOCKET_PATH>/<SOCKET_FILE>
+socket = {{SOCKET_PATH}}/{{SOCKET_FILE}}
 nice = 0
 
 [mysqld]
 user = mariadb
 pid-file = /var/run/mysqld/mysqld.pid
-socket = <SOCKET_PATH>/<SOCKET_FILE>
-port = 3306
+socket = {{SOCKET_PATH}}/{{SOCKET_FILE}}
+port = {{LISTEN_PORT}}
 basedir = /usr
 datadir = /var/lib/mysql
 tmpdir = /tmp
@@ -29,8 +29,8 @@ bulk_insert_buffer_size = 16M
 tmp_table_size = 32M
 max_heap_table_size = 32M
 
-character-set-server = <CHARACTER_SET>
-collation-server = <COLLATION>
+character-set-server = {{DB_CHARACTER_SET}}
+collation-server = {{DB_COLLATION}}
 
 #
 # * MyISAM
