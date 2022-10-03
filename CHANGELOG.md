@@ -1,3 +1,9 @@
+## 3.11.3 2022-10-03 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Fix IMAGE_NAME environment variable in Dockerfile
+
+
 ## 3.11.2 2022-10-02 <dave at tiredofit dot ca>
 
    ### Changed
