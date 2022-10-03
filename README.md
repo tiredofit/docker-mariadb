@@ -76,15 +76,18 @@ docker pull tiredofit/mariadb:(imagetag)
 
 The following image tags are available along with their tagged release based on what's written in the [Changelog](CHANGELOG.md):
 
-| Version  | Container OS | Tag            |
-| -------- | ------------ | -------------- |
-| latest   | Alpine       | `:latest`      |
-| `10.8.x` | Alpine       | `:10.8-latest` |
-| `10.7.x` | Alpine       | `:10.7-latest` |
-| `10.6.x` | Alpine       | `:10.6-latest` |
-| `10.5.x` | Alpine       | `:10.5-latest` |
-| `10.4.x` | Alpine       | `:10.4-latest` |
-| `10.3.x` | Alpine       | `:10.3-latest` |
+| Version   | Container OS | Tag             |
+| --------  | ------------ | --------------- |
+| latest    | Alpine       | `:latest`       |
+| `10.11.x` | Alpine       | `:10.10-latest` |
+| `10.10.x` | Alpine       | `:10.10-latest` |
+| `10.9.x`  | Alpine       | `:10.9-latest`  |
+| `10.8.x`  | Alpine       | `:10.8-latest`  |
+| `10.7.x`  | Alpine       | `:10.7-latest`  |
+| `10.6.x`  | Alpine       | `:10.6-latest`  |
+| `10.5.x`  | Alpine       | `:10.5-latest`  |
+| `10.4.x`  | Alpine       | `:10.4-latest`  |
+| `10.3.x`  | Alpine       | `:10.3-latest`  |
 
 #### Multi Architecture
 Images are built primarily for `amd64` architecture, and may also include builds for `arm/v7`, `arm64` and others. These variants are all unsupported. Consider [sponsoring](https://github.com/sponsors/tiredofit) my work so that I can work with various hardware. To see if this image supports multiple architecures, type `docker manifest (image):(tag)`
@@ -126,13 +129,14 @@ Be sure to view the following repositories to understand all the customizable op
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
 | `CHARACTER_SET`    | Set Default Character Set                                                                                                              | `utf8mb4`            |
 | `COLLATION`        | Set Default Collation                                                                                                                  | `utf8mb4_general_ci` |
-| `ROOT_PASS`        | Root Password for Instance (e.g. password)                                                                                             |                      |  |
+| `ROOT_PASS`        | Root Password for Instance (e.g. password)                                                                                             |                      |
 | `DB_AUTO_UPGRADE`  | If MariaDB has changed from first time image has been used, automatically upgrade DBs and tables to latest versions - `TRUE` / `FALSE` | `TRUE`               |
 | `DB_CONFIGURATION` | Type of Configuration - `standard`, or `default`                                                                                       | `standard`           |
 | `DB_NAME`          | Optional - Automatically Create Database - Seperate with commas for multiple databases                                                 |                      |
 | `DB_USER`          | Optional - Automatically Assign Username Priveleges to Database (e.g. `mysqluser`)                                                     |                      |
 | `DB_PASS`          | Password for authentication to above database (e.g.  `password`)                                                                       |                      |
-| `EXTRA_ARGUMENTS`  | Add extra arguments to the mariadb execution | |
+| `LISTEN_PORT`      | Listening Port                                                                                                                         | `3306`               |
+| `EXTRA_ARGUMENTS`  | Add extra arguments to the mariadb execution                                                                                           |                      |
 
 * With regards to `DB_CONFIGURATION`
   - `default` - Means the default my.cnf file from MariaDB
