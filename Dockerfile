@@ -1,14 +1,14 @@
 FROM docker.io/tiredofit/alpine:3.16
 LABEL maintainer="Dave Conroy (github.com/tiredofit)"
 
-ENV MARIADB_VERSION=10.10.1 \
+ENV MARIADB_VERSION=10.11.0 \
     MYSQLTUNER_VERSION=v1.9.9 \
     S6_SERVICES_GRACETIME=60000 \
     CONTAINER_NAME=mariadb-db \
     ZABBIX_AGENT_TYPE=classic \
     CONTAINER_ENABLE_MESSAGING=FALSE \
     CONTAINER_ENABLE_SCHEDULING=FALSE \
-    IMAGE_NAME="tiredofit/mariadb:10.9" \
+    IMAGE_NAME="tiredofit/mariadb:10.11" \
     IMAGE_REPO_URL="https://github.com/tiredofit/docker-mariadb/"
 
 ### Install Required Dependencies
