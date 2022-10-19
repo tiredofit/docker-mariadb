@@ -47,6 +47,7 @@ update_template /etc/mysql/my.cnf \
                                     LOG_FILE_ERROR \
                                     LOG_FILE_GENERAL_QUERY \
                                     LOG_FILE_SLOW_QUERY \
+                                    LOG_PATH \
                                     SOCKET_FILE \
                                     SOCKET_PATH
 
