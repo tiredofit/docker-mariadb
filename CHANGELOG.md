@@ -1,3 +1,9 @@
+## 3.12.2 2022-10-19 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Fix for logrotate and logshipping not working properly
+
+
 ## 3.12.1 2022-10-03 <dave at tiredofit dot ca>
 
    ### Added
