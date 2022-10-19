@@ -1,3 +1,9 @@
+## 3.11.6 2022-10-19 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Fix for LOG_PATH environment variable
+
+
 ## 3.11.5 2022-10-19 <dave at tiredofit dot ca>
 
    ### Changed
