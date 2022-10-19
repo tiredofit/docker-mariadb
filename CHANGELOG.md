@@ -1,3 +1,9 @@
+## 3.11.8 2022-10-19 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Fix Zabbix 'mysql.ping' command
+
+
 ## 3.11.7 2022-10-19 <dave at tiredofit dot ca>
 
    ### Changed
