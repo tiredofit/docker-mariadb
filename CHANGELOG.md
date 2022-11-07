@@ -1,3 +1,9 @@
+## 3.11.8 2022-11-07 <dave at tiredofit dot ca>
+
+   ### Added
+      - Maria DB 10.6.11
+
+
 ## 3.11.7 2022-10-19 <dave at tiredofit dot ca>
 
    ### Changed

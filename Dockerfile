@@ -1,7 +1,7 @@
 FROM docker.io/tiredofit/alpine:3.16
 LABEL maintainer="Dave Conroy (github.com/tiredofit)"
 
-ENV MARIADB_VERSION=10.6.10 \
+ENV MARIADB_VERSION=10.6.11 \
     MYSQLTUNER_VERSION=v1.9.9 \
     S6_SERVICES_GRACETIME=60000 \
     CONTAINER_NAME=mariadb-db \
@@ -178,4 +178,4 @@ RUN export CPU=`cat /proc/cpuinfo | grep -c processor` && \
 EXPOSE 3306
 
 ### Add folders
-ADD install /
+COPY install /
