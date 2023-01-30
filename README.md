@@ -77,7 +77,7 @@ docker pull docker.io/tiredofdit/mariadb:(imagetag)
 Builds of the image are also available on the [Github Container Registry](https://github.com/tiredofit/docker-mariadb/pkgs/container/docker-mariadb) 
  
 ```
-docker pull ghcr.io/tiredofit/docker-mariadb/pkgs/container/docker-mariadb):(imagetag)
+docker pull ghcr.io/tiredofit/docker-mariadb:(imagetag)
 ``` 
 
 The following image tags are available along with their tagged release based on what's written in the [Changelog](CHANGELOG.md):
