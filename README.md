@@ -1,7 +1,7 @@
 # github.com/tiredofit/docker-mariadb
 
 [![GitHub release](https://img.shields.io/github/v/tag/tiredofit/docker-mariadb?style=flat-square)](https://github.com/tiredofit/docker-mariadb/releases/latest)
-[![Build Status](https://img.shields.io/github/workflow/status/tiredofit/docker-mariadb/build?style=flat-square)](https://github.com/tiredofit/docker-mariadb/actions?query=workflow%3Abuild)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/tiredofit/docker-mariadb/main.yml?branch=10.8&style=flat-square)](https://github.com/tiredofit/docker-mariadb/actions)
 [![Docker Stars](https://img.shields.io/docker/stars/tiredofit/mariadb.svg?style=flat-square&logo=docker)](https://hub.docker.com/r/tiredofit/mariadb/)
 [![Docker Pulls](https://img.shields.io/docker/pulls/tiredofit/mariadb.svg?style=flat-square&logo=docker)](https://hub.docker.com/r/tiredofit/mariadb/)
 [![Become a sponsor](https://img.shields.io/badge/sponsor-tiredofit-181717.svg?logo=github&style=flat-square)](https://github.com/sponsors/tiredofit)
