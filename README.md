@@ -9,7 +9,7 @@
 
 ## About
 
-This will build a Docker iamge for [MariaDB](https://mariadb.org). A relational database forked from MySQL.
+This will build a Docker image for [MariaDB](https://mariadb.org). A relational database forked from MySQL.
 
 * Configuration tweaked to use all around settings for general usage - Can be changed
 * Can use official Mysql/MariaDB environment variables (MYSQL_USER, MYSQL_PASSWORD, MYSQL_ROOT_PASSWORD)
