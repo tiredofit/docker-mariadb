@@ -1,7 +1,7 @@
-FROM docker.io/tiredofit/alpine:3.16
+FROM docker.io/tiredofit/alpine:3.17
 LABEL maintainer="Dave Conroy (github.com/tiredofit)"
 
-ENV MARIADB_VERSION=10.7.7 \
+ENV MARIADB_VERSION=10.7.8 \
     MYSQLTUNER_VERSION=v1.9.9 \
     S6_SERVICES_GRACETIME=60000 \
     CONTAINER_NAME=mariadb-db \
