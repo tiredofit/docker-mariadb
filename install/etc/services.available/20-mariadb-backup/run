@@ -7,6 +7,8 @@ PROCESS_NAME="mariadb-backup"
 check_container_initialized
 check_service_initialized init 10-mariadb
 
+TMPDIR=${TMPDIR:-"/tmp/backups"}
+
 if [ "$1" != "NOW" ]; then
     if [ ! -f /tmp/.container/10-mariadb ]; then
         print_error "MariaDB has not properly initialized!"

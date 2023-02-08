@@ -1,3 +1,9 @@
+## 10.4-10.4-3.12 2023-02-08 <dave at tiredofit dot ca>
+
+   ### Added
+      - Isolate some db backup routines from container initialization
+
+
 ## 10.4-3.11.9 2023-02-06 <dave at tiredofit dot ca>
 
    ### Added
