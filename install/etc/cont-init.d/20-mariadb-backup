@@ -2,12 +2,18 @@
 
 source /assets/functions/00-container
 prepare_service
+prepare_service 03-monitoring
 # shellcheck disable=SC2034
 PROCESS_NAME="mariadb-backup"
+output_off
 
-### Enable or disable the database backup script
-if var_false "${DB_BACKUP}" ; then
-    print_notice "Disabling scheduled backups"
+if var_true "${DB_BACKUP}" ; then
+    print_notice "Enabling scheduled backups"
+    backup_bootstrap_variables
+    backup_sanity_test
+    backup_setup_mode
+    create_zabbix dbbackup
+else
     service_stop 20-mariadb-backup
 fi
 
