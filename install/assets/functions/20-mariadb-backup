@@ -1,0 +1,495 @@
+#!/command/with-contenv bash
+
+backup_bootstrap_variables() {
+    case "${DB_BACKUP_TYPE,,}" in
+        "mysql" | "mariadb" )
+            dbtype=mysql
+            sanity_var DB_BACKUP_NAME "Database Name to backup. Multiple seperated by commas"
+            [[ ( -n "${DB_BACKUP_PASS}" ) || ( -n "${DB_BACKUP_PASS_FILE}" ) ]] && file_env 'DB_BACKUP_PASS'
+            [[ ( -n "${DB_BACKUP_PASS}" ) ]] && export MYSQL_PWD=${DB_BACKUP_PASS}
+            if var_true "${DB_BACKUP_MYSQL_ENABLE_TLS}" ; then
+                if [ -n "${DB_BACKUP_MYSQL_TLS_CA_FILE}" ] ; then
+                    mysql_tls_args="--ssl_ca=${DB_BACKUP_MYSQL_TLS_CA_FILE}"
+                fi
+                if [ -n "${DB_BACKUP_MYSQL_TLS_CERT_FILE}" ] ; then
+                    mysql_tls_args="${mysql_tls_args} --ssl_cert=${DB_BACKUP_MYSQL_TLS_CERT_FILE}"
+                fi
+                if [ -n "${DB_BACKUP_MYSQL_TLS_KEY_FILE}" ] ; then
+                    mysql_tls_args="${mysql_tls_args} --ssl_key=${DB_BACKUP_MYSQL_TLS_KEY_FILE}"
+                fi
+
+                if var_true "${DB_BACKUP_TLS_VERIFY}" ; then
+                    mysql_tls_args="${mysql_tls_args} --sslverify-server-cert"
+                fi
+
+                if [ -n "${DB_BACKUP_MYSQL_TLS_VERSION}" ] ; then
+                    mysql_tls_args="${mysql_tls_args} --tls_version=${DB_BACKUP_MYSQL_TLS_VERSION}"
+                fi
+            fi
+        ;;
+        * )
+            print_error "I don't recognize 'DB_BACKUP_TYPE=${DB_BACKUP_TYPE}' - Exitting.."
+            exit 99
+        ;;
+    esac
+
+    if [ "${DB_BACKUP_BACKUP_LOCATION,,}" = "s3" ] || [ "${DB_BACKUP_BACKUP_LOCATION,,}" = "minio" ] && [ -n "${DB_BACKUP_S3_KEY_ID}" ] && [ -n "${DB_BACKUP_S3_KEY_SECRET}" ]; then
+        file_env 'DB_BACKUP_S3_KEY_ID'
+        file_env 'DB_BACKUP_S3_KEY_SECRET'
+    fi
+}
+
+backup_mysql() {
+    if var_true "${DB_BACKUP_MYSQL_SINGLE_TRANSACTION}" ; then
+        single_transaction="--single-transaction"
+    fi
+    if var_true "${DB_BACKUP_MYSQL_STORED_PROCEDURES}" ; then
+        stored_procedures="--routines"
+    fi
+
+    if [ "${DB_BACKUP_NAME,,}" = "all" ] ; then
+        print_debug "Preparing to back up everything except for information_schema and _* prefixes"
+        db_names=$(mysql --socket=/var/run/mysqld/mysqld.sock -u$DB_BACKUP_USER ${mysql_tls_args} ${DB_BACKUP_EXTRA_OPTS} --batch -e "SHOW DATABASES;" | grep -v Database | grep -v schema )
+        if [ -n "${DB_BACKUP_NAME_EXCLUDE}" ] ; then
+            db_names_exclusions=$(echo "${DB_BACKUP_NAME_EXCLUDE}" | tr ',' '\n')
+            for db_exclude in ${db_names_exclusions} ; do
+                print_debug "Excluding '${db_exclude}' from ALL DB_BACKUP_NAME backups"
+                db_names=$(echo "$db_names" | sed "/${db_exclude}/d" )
+            done
+        fi
+    else
+        db_names=$(echo "${DB_BACKUP_NAME}" | tr ',' '\n')
+    fi
+
+    print_debug "Databases Found: $(echo ${db_names} | xargs | tr ' ' ',')"
+
+    if var_true "${DB_BACKUP_SPLIT_DB}" ; then
+        for db in ${db_names} ; do
+                backup_prepare_dbbackup
+                target=mysql_${db}_${CONTAINER_NAME,,}_${now}.sql
+                backup_compression
+                backup_pre_dbbackup $db
+                print_notice "Dumping MySQL/MariaDB database: '${db}' ${compression_string}"
+                mysqldump --socket=/var/run/mysqld/mysqld.sock --max-allowed-packet=${DB_BACKUP_MYSQL_MAX_ALLOWED_PACKET} -u${DB_BACKUP_USER} ${single_transaction} ${stored_procedures} ${mysql_tls_args} ${DB_BACKUP_EXTRA_OPTS} --databases $db | $compress_cmd > "${DB_BACKUP_TEMP_LOCATION}"/"${target}"
+                exit_code=$?
+                backup_check_exit_code $target
+                backup_generate_checksum
+                backup_move_dbbackup
+                backup_post_dbbackup $db
+        done
+    else
+        print_debug "Not splitting database dumps into their own files"
+        backup_prepare_dbbackup
+        target=mysql_all_${CONTAINER_NAME,,}_${now}.sql
+        backup_compression
+        backup_pre_dbbackup all
+        print_notice "Dumping all MySQL / MariaDB databases: '$(echo ${db_names} | xargs | tr ' ' ',')' ${compression_string}"
+        mysqldump --socket=/var/run/mysqld/mysqld.sock --max-allowed-packet=${DB_BACKUP_MYSQL_MAX_ALLOWED_PACKET} -u${DB_BACKUP_USER} ${single_transaction} ${stored_procedures} ${mysql_tls_args} ${DB_BACKUP_EXTRA_OPTS} --databases $(echo ${db_names} | xargs) | $compress_cmd > "${DB_BACKUP_TEMP_LOCATION}"/"${target}"
+        exit_code=$?
+        backup_check_exit_code $target
+        backup_generate_checksum
+        backup_move_dbbackup
+        backup_post_dbbackup all
+    fi
+}
+
+backup_check_availability() {
+### Set the Database Type
+    if var_false "${DB_BACKUP_SKIP_AVAILABILITY_CHECK}" ; then
+        case "$dbtype" in
+            "mysql" )
+                counter=0
+                export MYSQL_PWD=${DB_BACKUP_PASS}
+                while ! (mysqladmin --socket=/var/run/mysqld/mysqld.sock -u"${DB_BACKUP_USER}" ${mysql_tls_args} ${DB_BACKUP_EXTRA_OPTS} status > /dev/null 2>&1) ; do
+                    sleep 5
+                    (( counter+=5 ))
+                    print_warn "MySQL/MariaDB Server is not accessible, retrying.. (${counter} seconds so far)"
+                done
+            ;;
+        esac
+    fi
+}
+
+backup_check_exit_code() {
+    print_debug "DB Backup Exit Code is ${exit_code}"
+    case "${exit_code}" in
+        0 )
+            print_info "DB Backup of '${1}' completed successfully"
+        ;;
+        * )
+            print_error "DB Backup of '${1}' reported errors"
+            master_exit_code=1
+        ;;
+    esac
+}
+
+backup_cleanup_old_data() {
+    if [ -n "${DB_BACKUP_CLEANUP_TIME}" ]; then
+        if [ "${master_exit_code}" != 1 ]; then
+            case "${DB_BACKUP_BACKUP_LOCATION,,}" in
+                "blobxfer" )
+                    print_info "Cleaning up old backups on filesystem"
+                    mkdir -p "${DB_BACKUP_DUMP_TARGET}"
+                    find "${DB_BACKUP_DUMP_TARGET}"/  -mmin +"${DB_CLEANUP_TIME}" -iname "*" -exec rm {} \;
+                    print_info "Syncing changes via blobxfer"
+                    silent blobxfer upload --mode file --remote-path ${DB_BACKUP_BLOBXFER_REMOTE_PATH} --local-path ${DB_BACKUP_DUMP_TARGET} --delete --delete-only
+                ;;
+                "file" | "filesystem" )
+                    print_info "Cleaning up old backups on filesystem"
+                    mkdir -p "${DB_BACKUP_DUMP_TARGET}"
+                    find "${DB_BACKUP_DUMP_TARGET}"/  -mmin +"${DB_BACKUP_CLEANUP_TIME}" -iname "*" -exec rm {} \;
+                ;;
+                "s3" | "minio" )
+                    print_info "Cleaning up old backups on S3 storage"
+                    aws ${DB_BACKUP_PARAM_AWS_ENDPOINT_URL} s3 ls s3://${DB_BACKUP_S3_BUCKET}/${DB_BACKUP_S3_PATH}/ ${s3_ssl} ${s3_ca_cert} ${DB_BACKUP_S3_EXTRA_OPTS} | grep " DIR " -v | grep " PRE " -v | while read -r s3_file; do
+                        s3_createdate=$(echo $s3_file | awk {'print $1" "$2'})
+                        s3_createdate=$(date -d "$s3_createdate" "+%s")
+                        s3_olderthan=$(echo $(( $(date +%s)-${DB_BACKUP_CLEANUP_TIME}*60 )))
+                        if [[ $s3_createdate -le $s3_olderthan ]] ; then
+                            s3_filename=$(echo $s3_file | awk {'print $4'})
+                            if [ "$s3_filename" != "" ] ; then
+                                print_debug "Deleting $s3_filename"
+                                aws ${DB_BACKUP_PARAM_AWS_ENDPOINT_URL} s3 rm s3://${DB_BACKUP_S3_BUCKET}/${DB_BACKUP_S3_PATH}/${s3_filename} ${s3_ssl} ${s3_ca_cert} ${DB_BACKUP_S3_EXTRA_OPTS}
+                            fi
+                        fi
+
+                    done
+                ;;
+            esac
+        else
+            print_error "Skipping Cleaning up old backups because there were errors in backing up"
+        fi
+    fi
+}
+
+backup_compression() {
+   if var_false "${DB_BACKUP_ENABLE_PARALLEL_COMPRESSION}" ; then
+       DB_BACKUP_PARALLEL_COMPRESSION_THREADS=1
+   fi
+
+   case "${DB_BACKUP_COMPRESSION,,}" in
+        gz* )
+            if var_true "${DB_BACKUP_GZ_RSYNCABLE}" ; then
+                gz_rsyncable=--rsyncable
+            fi
+            compress_cmd="pigz -q -${DB_BACKUP_COMPRESSION_LEVEL} -p ${DB_BACKUP_PARALLEL_COMPRESSION_THREADS} ${gz_rsyncable}"
+            compression_type="gzip"
+            extension=".gz"
+            dir_compress_cmd=${compress_cmd}
+            target_dir=${target}
+            target=${target}.gz
+        ;;
+        bz* )
+            compress_cmd="pbzip2 -q -${DB_BACKUP_COMPRESSION_LEVEL} -p${DB_BACKUP_PARALLEL_COMPRESSION_THREADS} "
+            compression_type="bzip2"
+            dir_compress_cmd=${compress_cmd}
+            extension=".bz2"
+            target_dir=${target}
+            target=${target}.bz2
+        ;;
+        xz* )
+            compress_cmd="pixz -${DB_BACKUP_COMPRESSION_LEVEL} -p ${DB_BACKUP_PARALLEL_COMPRESSION_THREADS} "
+            compression_type="xzip"
+            dir_compress_cmd=${compress_cmd}
+            extension=".xz"
+            target_dir=${target}
+            target=${target}.xz
+        ;;
+        zst* )
+            compress_cmd="zstd -q -q --rm -${DB_BACKUP_COMPRESSION_LEVEL} -T${DB_BACKUP_PARALLEL_COMPRESSION_THREADS} "
+            compression_type="zstd"
+            dir_compress_cmd=${compress_cmd}
+            extension=".zst"
+            target_dir=${target}
+            target=${target}.zst
+        ;;
+        "none" | "false")
+            compress_cmd="cat "
+            compression_type="none"
+            dir_compress_cmd="cat "
+            target_dir=${target}
+        ;;
+    esac
+
+    case "${CONTAINER_LOG_LEVEL,,}" in
+        "debug" )
+            if [ "${compression_type}" = "none" ] ; then
+                compression_string="with '${DB_BACKUP_PARALLEL_COMPRESSION_THREADS}' threads"
+            else
+                compression_string="and compressing with '${compression_type}:${DB_BACKUP_COMPRESSION_LEVEL}' with '${DB_BACKUP_PARALLEL_COMPRESSION_THREADS}' threads"
+            fi
+        ;;
+        * )
+            if [ "${compression_type}" != "none" ] ; then
+                compression_string="and compressing with '${compression_type}'"
+            fi
+        ;;
+    esac
+}
+
+backup_create_archive() {
+    if [ "${exit_code}" = "0" ] ; then
+        print_notice "Creating archive file of '${target_dir}' with tar ${compression_string}"
+        tar cf - "${DB_BACKUP_TEMP_LOCATION}"/"${target_dir}" | $dir_compress_cmd > "${DB_BACKUP_TEMP_LOCATION}"/"${target_dir}".tar"${extension}"
+    else
+        print_error "Skipping creating archive file because backup did not complete successfully"
+    fi
+}
+
+backup_generate_checksum() {
+    if var_true "${DB_BACKUP_ENABLE_CHECKSUM}" ; then
+        if [ "${exit_code}" = "0" ] ; then
+            case "${DB_BACKUP_CHECKSUM,,}" in
+                "md5" )
+                    checksum_command="md5sum"
+                    checksum_extension="md5"
+                ;;
+                "sha1" )
+                    checksum_command="sha1sum"
+                    checksum_extension="sha1"
+                ;;
+            esac
+
+            print_notice "Generating ${checksum_extension^^} for '${target}'"
+            cd "${DB_BACKUP_TEMP_LOCATION}"
+            ${checksum_command} "${target}" > "${target}"."${checksum_extension}"
+            checksum_value=$(${checksum_command} "${target}" | awk ' { print $1}')
+            print_debug "${checksum_extension^^}: ${checksum_value} - ${target}"
+        else
+            print_error "Skipping Checksum creation because backup did not complete successfully"
+        fi
+    fi
+}
+
+backup_move_dbbackup() {
+    if [ "${exit_code}" = "0" ] ; then
+        dbbackup_size="$(stat -c%s "${DB_BACKUP_TEMP_LOCATION}"/"${target}")"
+        dbbackup_date="$(date -r  "${DB_BACKUP_TEMP_LOCATION}"/"${target}" +'%s')"
+
+        case "${DB_BACKUP_SIZE_VALUE,,}" in
+            "b" | "bytes" )
+                DB_BACKUP_SIZE_VALUE=1
+            ;;
+            "[kK]" | "[kK][bB]" | "kilobytes" | "[mM]" | "[mM][bB]" | "megabytes" )
+                DB_BACKUP_SIZE_VALUE="-h"
+            ;;
+            *)
+                DB_BACKUP_SIZE_VALUE=1
+            ;;
+        esac
+        if [ "${DB_BACKUP_SIZE_VALUE}" = "1" ] ; then
+            filesize=$(stat -c%s "${DB_BACKUP_TEMP_LOCATION}"/"${target}")
+            print_notice "Backup of ${target} created with the size of ${filesize} bytes"
+        else
+            filesize=$(du -h "${DB_BACKUP_TEMP_LOCATION}"/"${target}" | awk '{ print $1}')
+            print_notice "Backup of ${target} created with the size of ${filesize}"
+        fi
+
+        case "${DB_BACKUP_LOCATION,,}" in
+            "file" | "filesystem" )
+                print_debug "Moving backup to filesystem"
+                mkdir -p "${DB_BACKUP_DUMP_TARGET}"
+                mv "${DB_BACKUP_TEMP_LOCATION}"/*."${checksum_extension}" "${DB_BACKUP_DUMP_TARGET}"/
+                mv "${DB_BACKUP_TEMP_LOCATION}"/"${target}" "${DB_BACKUP_DUMP_TARGET}"/"${target}"
+            ;;
+            "s3" | "minio" )
+                print_debug "Moving backup to S3 Bucket"
+                if [ -n "${DB_BACKUP_S3_KEY_ID}" ] && [ -n "${DB_BACKUP_S3_KEY_SECRET}" ]; then
+                    export AWS_ACCESS_KEY_ID=${DB_BACKUP_S3_KEY_ID}
+                    export AWS_SECRET_ACCESS_KEY=${DB_BACKUP_S3_KEY_SECRET}
+                else
+                    print_debug "Variable DB_BACKUP_S3_KEY_ID or DB_BACKUP_S3_KEY_SECRET is not set. Please ensure sufficiant IAM role is assigned."
+                fi
+                export AWS_DEFAULT_REGION=${DB_BACKUP_S3_REGION}
+                if [ -f "${DB_BACKUP_S3_CERT_CA_FILE}" ] ; then
+                    print_debug "Using Custom CA for S3 Backups"
+                    s3_ca_cert="--ca-bundle ${DB_BACKUP_S3_CERT_CA_FILE}"
+                fi
+                if var_true "${DB_BACKUP_S3_CERT_SKIP_VERIFY}" ; then
+                    print_debug "Skipping SSL verification for HTTPS S3 Hosts"
+                    s3_ssl="--no-verify-ssl"
+                fi
+
+                [[ ( -n "${DB_BACKUP_S3_HOST}" ) ]] && DB_BACKUP_PARAM_AWS_ENDPOINT_URL=" --endpoint-url ${DB_BACKUP_S3_PROTOCOL}://${DB_BACKUP_S3_HOST}"
+
+                silent aws ${DB_BACKUP_PARAM_AWS_ENDPOINT_URL} s3 cp ${DB_BACKUP_TEMP_LOCATION}/${target} s3://${DB_BACKUP_S3_BUCKET}/${DB_BACKUP_S3_PATH}/${target} ${s3_ssl} ${s3_ca_cert} ${DB_BACKUP_S3_EXTRA_OPTS}
+                if var_true "${DB_BACKUP_ENABLE_CHECKSUM}" ; then
+                    silent aws ${DB_BACKUP_PARAM_AWS_ENDPOINT_URL} s3 cp ${DB_BACKUP_TEMP_LOCATION}/*.${checksum_extension} s3://${DB_BACKUP_S3_BUCKET}/${DB_BACKUP_S3_PATH}/ ${s3_ssl} ${s3_ca_cert} ${DB_BACKUP_S3_EXTRA_OPTS}
+                fi
+
+                rm -rf "${DB_BACKUP_TEMP_LOCATION}"/*."${checksum_extension}"
+                rm -rf "${DB_BACKUP_TEMP_LOCATION}"/"${target}"
+            ;;
+            "blobxfer" )
+                print_info "Moving backup to S3 Bucket with blobxfer"
+
+                mkdir -p "${DB_BACKUP_DUMP_TARGET}"
+                mv "${DB_BACKUP_TEMP_LOCATION}"/*."${checksum_extension}" "${DB_BACKUP_DUMP_TARGET}"/
+                mv "${DB_BACKUP_TEMP_LOCATION}"/"${target}" "${DB_BACKUP_DUMP_TARGET}"/"${target}"
+
+                silent blobxfer upload --mode file --remote-path ${DB_BACKUP_BLOBXFER_REMOTE_PATH} --local-path ${DB_BACKUP_DUMP_TARGET}
+
+                rm -rf "${DB_BACKUP_TEMP_LOCATION}"/*."${checksum_extension}"
+                rm -rf "${DB_BACKUP_TEMP_LOCATION}"/"${target}"
+            ;;
+        esac
+    else
+        print_error "Skipping moving DB Backup to final location because backup did not complete successfully"
+    fi
+
+    rm -rf "${DB_BACKUP_TEMP_LOCATION}"/*
+}
+
+backup_prepare_dbbackup() {
+    dbbackup_start_time=$(date +"%s")
+    now=$(date +"%Y%m%d-%H%M%S")
+    now_time=$(date +"%H:%M:%S")
+    now_date=$(date +"%Y-%m-%d")
+    target=${dbtype}_${DB_BACKUP_NAME,,}_${CONTAINER_NAME,,}_${now}.sql
+}
+
+backup_pre_dbbackup() {
+    ### Pre Script Support
+    if [ -n "${DB_BACKUP_PRE_SCRIPT}" ] ; then
+        if var_true "${DB_BACKUP_PRE_SCRIPT_SKIP_X_VERIFY}" ; then
+            eval "${DB_BACKUP_PRE_SCRIPT}" "${dbtype}" "${CONTAINER_NAME}" "${1}" "${dbbackup_start_time}" "${target}"
+        else
+            if [ -x "${DB_BACKUP_PRE_SCRIPT}" ] ; then
+                print_notice "Found PRE_SCRIPT environment variable. Executing '${DB_BACKUP_PRE_SCRIPT}"
+                eval "${DB_BACKUP_PRE_SCRIPT}" "${dbtype}" "${CONTAINER_NAME}" "${1}" "${dbbackup_start_time}" "${target}"
+            else
+                print_error "Can't execute DB_BACKUP_PRE_SCRIPT environment variable '${DB_BACKUP_PRE_SCRIPT}' as its filesystem bit is not executible!"
+            fi
+        fi
+    fi
+
+    ### Pre Backup Custom Script Support
+    if [ -d "/assets/custom-scripts/pre" ] && dir_notempty "/assets/custom-scripts/pre" ; then
+        print_warning "Found Custom Post Scripts in /assets/custom-scripts/pre - Automatically moving them to '${DB_BACKUP_SCRIPT_LOCATION_PRE}'"
+        mkdir -p "${DB_BACKUP_SCRIPT_LOCATION_PRE}"
+        silent cp /assets/custom-scripts/pre/* "${DB_BACKUP_SCRIPT_LOCATION_PRE}"
+    fi
+
+    if [ -d "${DB_BACKUP_SCRIPT_LOCATION_PRE}" ] && dir_notempty "${DB_BACKUP_SCRIPT_LOCATION_PRE}" ; then
+        for f in $(find ${DB_BACKUP_SCRIPT_LOCATION_PRE} -name \*.sh -type f); do
+            if var_true "${DB_BACKUP_PRE_SCRIPT_SKIP_X_VERIFY}" ; then
+                ${f} "${dbtype}" "${CONTAINER_NAME}" "${1}" "${dbbackup_start_time}" "${target}"
+            else
+                if [ -x "${f}" ] ; then
+                    print_notice "Executing pre backup custom script : '${f}'"
+                    ## script DB_TYPE CONTAINER_NAME DB_NAME STARTEPOCH BACKUP_FILENAME
+                    ${f} "${dbtype}" "${CONTAINER_NAME}" "${1}" "${dbbackup_start_time}" "${target}"
+                else
+                    print_error "Can't run pre backup custom script: '${f}' as its filesystem bit is not executible!"
+                fi
+            fi
+        done
+    fi
+}
+
+backup_post_dbbackup() {
+    dbbackup_finish_time=$(date +"%s")
+    dbbackup_total_time=$(echo $((dbbackup_finish_time-dbbackup_start_time)))
+
+    if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
+        print_notice "Sending Backup Statistics to Zabbix"
+        silent zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k dbbackup.size -o "${dbbackup_size}"
+        silent zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k dbbackup.datetime -o "${dbbackup_date}"
+        silent zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k dbbackup.status -o "${exit_code}"
+        silent zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k dbbackup.backup_duration -o "$(echo $((dbbackup_finish_time-dbbackup_start_time)))"
+        if [ "$?" != "0" ] ; then print_error "Error sending statistics, consider disabling with 'CONTAINER_ENABLE_MONITORING=FALSE'" ; fi
+    fi
+
+    ### Post Script Support
+    if [ -n "${DB_BACKUP_POST_SCRIPT}" ] ; then
+        if var_true "${DB_BACKUP_POST_SCRIPT_SKIP_X_VERIFY}" ; then
+            eval "${DB_BACKUP_POST_SCRIPT}" "${exit_code}" "${dbtype}" "${CONTAINER_NAME}" "${1}" "${dbbackup_start_time}" "${dbbackup_finish_time}" "${dbbackup_total_time}" "${target}" "${filesize}" "${checksum_value}"
+        else
+            if [ -x "${DB_BACKUP_POST_SCRIPT}" ] ; then
+                print_notice "Found POST_SCRIPT environment variable. Executing '${DB_BACKUP_POST_SCRIPT}"
+                eval "${DB_BACKUP_POST_SCRIPT}" "${exit_code}" "${dbtype}" "${CONTAINER_NAME}" "${1}" "${dbbackup_start_time}" "${dbbackup_finish_time}" "${dbbackup_total_time}" "${target}" "${filesize}" "${checksum_value}"
+            else
+                print_error "Can't execute POST_SCRIPT environment variable '${DB_BACKUP_POST_SCRIPT}' as its filesystem bit is not executible!"
+            fi
+        fi
+    fi
+
+    ### Post Backup Custom Script Support
+    if [ -d "/assets/custom-scripts/" ] && dir_notempty "/assets/custom-scripts" ; then
+        print_warning "Found Custom Post Scripts in /assets/custom-scripts/ - Automatically moving them to '${DB_BACKUP_SCRIPT_LOCATION_POST}'"
+        mkdir -p "${DB_BACKUP_SCRIPT_LOCATION_POST}"
+        silent cp /assets/custom-scripts/* "${DB_BACKUP_SCRIPT_LOCATION_POST}"
+    fi
+
+    if [ -d "${DB_BACKUP_SCRIPT_LOCATION_POST}" ] && dir_notempty "${DB_BACKUP_SCRIPT_LOCATION_POST}" ; then
+        for f in $(find ${DB_BACKUP_SCRIPT_LOCATION_POST} -name \*.sh -type f); do
+            if var_true "${DB_BACKUP_POST_SCRIPT_SKIP_X_VERIFY}" ; then
+                ${f} "${exit_code}" "${dbtype}" "${CONTAINER_NAME}" "${1}" "${dbbackup_start_time}" "${dbbackup_finish_time}" "${dbbackup_total_time}" "${target}" "${filesize}" "${checksum_value}"
+            else
+                if [ -x "${f}" ] ; then
+                    print_notice "Executing post backup custom script : '${f}'"
+                    ## script EXIT_CODE DB_TYPE CONTAINER_NAME DB_NAME STARTEPOCH FINISHEPOCH DURATIONEPOCH BACKUP_FILENAME FILESIZE CHECKSUMVALUE
+                    ${f} "${exit_code}" "${dbtype}" "${CONTAINER_NAME}" "${1}" "${dbbackup_start_time}" "${dbbackup_finish_time}" "${dbbackup_total_time}" "${target}" "${filesize}" "${checksum_value}"
+                else
+                    print_error "Can't run post backup custom script: '${f}' as its filesystem bit is not executible!"
+                fi
+            fi
+        done
+    fi
+
+    print_notice "DB Backup for '${1}' time taken: $(echo ${dbbackup_total_time} | awk '{printf "Hours: %d Minutes: %02d Seconds: %02d", $1/3600, ($1/60)%60, $1%60}')"
+    unset s3_ssl
+    unset s3_ca_cert
+}
+
+backup_sanity_test() {
+    sanity_var DB_BACKUP_TYPE "Database Type"
+
+    case "${DB_BACKUP_TYPE,,}" in
+        "mysql" | "mariadb" )
+            sanity_var DB_BACKUP_NAME "Database Name to backup. Multiple seperated by commas"
+        ;;
+    esac
+
+    if [ "${DB_BACKUP_LOCATION,,}" = "s3" ] || [ "${DB_BACKUP_LOCATION,,}" = "minio" ] && [ -n "${DB_BACKUP_S3_KEY_ID}" ] && [ -n "${DB_BACKUP_S3_KEY_SECRET}" ]; then
+        sanity_var DB_BACKUP_S3_BUCKET "S3 Bucket"
+        sanity_var DB_BACKUP_S3_PATH "S3 Path"
+        sanity_var DB_BACKUP_S3_REGION "S3 Region"
+        file_env 'DB_BACKUP_S3_KEY_ID'
+        file_env 'DB_BACKUP_S3_KEY_SECRET'
+    fi
+}
+
+backup_setup_mode() {
+    if [ "${DB_BACKUP_MODE,,}" = "auto" ] || [ ${DB_BACKUP_MODE,,} = "default" ] ; then
+        print_debug "Running in Auto / Default Mode - Letting Image control scheduling"
+    else
+        print_info "Running in Manual mode - Execute 'backup_now' or '/etc/services.available/10-db-backup/run' to perform a manual backup"
+        service_stop 10-db-backup
+        if var_true "${DB_BACKUP_MANUAL_RUN_FOREVER}" ; then
+            mkdir -p /etc/services.d/99-run_forever
+            cat <<EOF > /etc/services.d/99-run_forever/run
+
+#!/bin/bash
+while true
+do
+	sleep 86400
+done
+EOF
+            chmod +x /etc/services.d/99-run_forever/run
+        else
+            if var_true "${CONTAINER_ENABLE_SCHEDULING}" ; then
+                print_error "Manual / Exit after execution mode doesn't work with 'CONTAINER_ENABLE_SCHEDULING=TRUE'"
+                exit 1
+            fi
+            if var_true "${CONTAINER_ENABLE_MONITORING}" ; then
+                print_error "Manual / Exit after execution mode doesn't work with 'CONTAINER_ENABLE_MONITORING=TRUE'"
+                exit 1
+            fi
+            if var_true "${CONTAINER_ENABLE_LOGSHIPPING}" ; then
+                print_error "Manual / Exit after execution mode doesn't work with 'CONTAINER_ENABLE_LOGSHIPPING=TRUE'"
+                exit 1
+            fi
+        fi
+    fi
+}
