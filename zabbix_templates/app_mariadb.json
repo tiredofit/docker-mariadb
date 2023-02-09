@@ -1,7 +1,7 @@
 {
     "zabbix_export": {
         "version": "6.2",
-        "date": "2023-02-09T02:03:10Z",
+        "date": "2023-02-09T21:10:15Z",
         "template_groups": [
             {
                 "uuid": "3cc61aa5d9eb4c36a0e8fd4524d088c5",
@@ -1740,6 +1740,7 @@
                     {
                         "uuid": "49cbb331980040908673ceb2706d9542",
                         "name": "Database discovery",
+                        "type": "ZABBIX_ACTIVE",
                         "key": "mysql.db.discovery[\"{$MYSQL.DSN}\",\"{$MYSQL.USER}\",\"{$MYSQL.PASSWORD}\"]",
                         "delay": "1h",
                         "filter": {
@@ -1757,6 +1758,7 @@
                             {
                                 "uuid": "e3e3c31483e94be2bd24b062bb049027",
                                 "name": "MySQL: Size of database {#DATABASE}",
+                                "type": "ZABBIX_ACTIVE",
                                 "key": "mysql.db.size[\"{$MYSQL.DSN}\",\"{$MYSQL.USER}\",\"{$MYSQL.PASSWORD}\",\"{#DATABASE}\"]",
                                 "delay": "5m",
                                 "history": "7d",
@@ -1973,6 +1975,7 @@
                     {
                         "uuid": "59cd0d5f67e441f7ad3627233ab6b595",
                         "name": "Replication discovery",
+                        "type": "ZABBIX_ACTIVE",
                         "key": "mysql.replication.discovery[\"{$MYSQL.DSN}\",\"{$MYSQL.USER}\",\"{$MYSQL.PASSWORD}\"]",
                         "delay": "1h",
                         "description": "If \"show slave status\" returns Master_Host, \"Replication: *\" items are created.",
@@ -1980,6 +1983,7 @@
                             {
                                 "uuid": "130d6421b7864444a083dc7ffb1c03c5",
                                 "name": "MySQL: Replication Slave status {#MASTER_HOST}",
+                                "type": "ZABBIX_ACTIVE",
                                 "key": "mysql.replication.get_slave_status[\"{$MYSQL.DSN}\",\"{$MYSQL.USER}\",\"{$MYSQL.PASSWORD}\",\"{#MASTER_HOST}\"]",
                                 "history": "0",
                                 "trends": "0",
