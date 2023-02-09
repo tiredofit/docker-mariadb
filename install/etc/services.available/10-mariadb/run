@@ -8,6 +8,11 @@ check_container_initialized
 check_service_initialized init
 liftoff
 
-if [ -n "${EXTRA_ARGUMENTS}" ]; then start_string="with extra arguments '${EXTRA_ARGUMENTS}'" ; fi
+if [ -n "${MYSQLD_ARGS}" ]; then start_string="with extra arguments '${MYSQLD_ARGS}'" ; fi
 print_start "Starting MariaDB ${MARIADB_VERSION} ${start_string}"
-silent exec /usr/bin/mysqld --defaults-file=/etc/mysql/my.cnf --user=mariadb --console --skip-name-resolve ${EXTRA_ARGUMENTS}
+silent exec s6-setuidgid mariadb \
+                                    /usr/bin/mysqld \
+                                                    --console
+                                                    --defaults-file="${CONFIG_PATH}"/"${CONFIG_FILE}" \
+                                                    --user=mariadb \
+                                                    --skip-name-resolve ${MYSQLD_ARGS}
