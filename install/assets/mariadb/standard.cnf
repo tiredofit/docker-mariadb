@@ -91,4 +91,4 @@ write_buffer = 2M
 interactive-timeout
 
 ## Include .conf files
-!includedir /etc/mysql/conf.d/
+!includedir {{CONFIG_CUSTOM_PATH}}
