@@ -1,80 +1,89 @@
-FROM docker.io/tiredofit/alpine:3.17
+ARG DISTRO=alpine
+ARG DISTRO_VARIANT=3.17
+
+FROM docker.io/tiredofit/${DISTRO}:${DISTRO_VARIANT}
 LABEL maintainer="Dave Conroy (github.com/tiredofit)"
 
-ENV MARIADB_VERSION=10.10.3 \
-    MYSQLTUNER_VERSION=v1.9.9 \
+ARG MARIADB_VERSION
+ARG MYSQLTUNER_VERSION
+
+ENV MARIADB_VERSION=${MARIADB_VERSION:-"10.10.3"} \
+    MYSQLTUNER_VERSION=${MYSQLTUNER_VERSION:-"v1.9.9"} \
+    MARIADB_REPO_URL=https://github.com/MariaDB/server \
+    MYSQLTUNER_REPO_URL=https://github.com/major/MySQLTuner-perl \
     S6_SERVICES_GRACETIME=60000 \
     CONTAINER_NAME=mariadb-db \
-    ZABBIX_AGENT_TYPE=classic \
+    ZABBIX_AGENT_TYPE=modern \
     CONTAINER_ENABLE_MESSAGING=FALSE \
     CONTAINER_ENABLE_SCHEDULING=TRUE \
     IMAGE_NAME="tiredofit/mariadb:10.10" \
     IMAGE_REPO_URL="https://github.com/tiredofit/docker-mariadb/"
 
 ### Install Required Dependencies
-RUN export CPU=`cat /proc/cpuinfo | grep -c processor` && \
+RUN source /assets/functions/00-container && \
+    set -x && \
+    package update && \
+    package upgrade && \
+    package install .mariadb-builddeps \
+                    alpine-sdk \
+                    asciidoc \
+                    autoconf \
+                    automake \
+                    bison \
+                    boost-dev \
+                    bzip2-dev \
+                    cmake \
+                    curl-dev \
+                    gnutls-dev \
+                    libaio-dev \
+                    libarchive-dev \
+                    libevent-dev \
+                    libxml2-dev \
+                    linux-headers \
+                    lz4-dev \
+                    lzo-dev \
+                    ncurses-dev \
+                    pcre2-dev \
+                    python3-dev \
+                    py3-pip \
+                    readline-dev \
+                    xz-dev \
+                    zlib-dev \
+                    && \
     \
-    apk update && \
-    apk upgrade && \
+    package install .mariadb-rundeps \
+                    aws-cli \
+                    boost \
+                    bzip2 \
+                    geos \
+                    gnutls \
+                    ncurses-libs \
+                    libaio \
+                    libarchive \
+                    libcurl \
+                    lzo \
+                    lz4 \
+                    lz4-libs \
+                    libstdc++ \
+                    libxml2 \
+                    perl \
+                    perl-doc \
+                    pigz \
+                    proj \
+                    pwgen \
+                    py3-cryptography \
+                    xz \
+                    zstd \
+                    && \
     \
-    # Install Dependencies
-    apk add -t .mariadb-builddeps \
-                alpine-sdk \
-                asciidoc \
-                autoconf \
-                automake \
-                bison \
-                boost-dev \
-                bzip2-dev \
-                cmake \
-                curl-dev \
-                gnutls-dev \
-                libaio-dev \
-                libarchive-dev \
-                libxml2-dev \
-                linux-headers \
-                lz4-dev \
-                lzo-dev \
-                ncurses-dev \
-                openssl-dev \
-                && \
+    pip3 install blobxfer && \
     \
-    apk add -t .mariadb-rundeps \
-                boost \
-                bzip2 \
-                geos \
-                gnutls \
-                ncurses-libs \
-                libaio \
-                libarchive \
-                libcurl \
-                lzo \
-                lz4 \
-                lz4-libs \
-                openssl \
-                libstdc++ \
-                libxml2 \
-                perl \
-                perl-doc \
-                pigz \
-                proj \
-                pwgen \
-                xz \
-                && \
-    \
-    # Add group and user for mysql
     addgroup -S -g 3306 mariadb && \
     adduser -S -D -H -u 3306 -G mariadb -g "MariaDB" mariadb && \
     \
-    # Download and unpack mariadb
-    mkdir -p /etc/mysql && \
-    mkdir -p /usr/src/mariadb && \
-    curl -sSL https://downloads.mariadb.com/MariaDB/mariadb-${MARIADB_VERSION}/source/mariadb-${MARIADB_VERSION}.tar.gz | tar xvfz - --strip 1 -C /usr/src/mariadb && \
-    \
-    # Build maridb
-    mkdir -p /tmp/_ && \
-    cd /usr/src/mariadb && \
+    clone_git_repo "${MARIADB_REPO_URL}" "mariadb-${MARIADB_VERSION}" && \
     sed -i 's/END()/ENDIF()/' libmariadb/cmake/ConnectorName.cmake && \
+    mkdir -p /tmp/_ && \
     cmake . \
         -DCMAKE_BUILD_TYPE=MinSizeRel \
         -DCOMMON_C_FLAGS="-O3 -s -fno-omit-frame-pointer -pipe" \
@@ -85,7 +94,6 @@ RUN export CPU=`cat /proc/cpuinfo | grep -c processor` && \
         -DMYSQL_UNIX_ADDR=/run/mysqld/mysqld.sock \
         -DDEFAULT_CHARSET=utf8mb4 \
         -DDEFAULT_COLLATION=utf8mb4_general_ci \
-        -DENABLED_LOCAL_INFILE=ON \
         -DINSTALL_INFODIR=share/mysql/docs \
         -DINSTALL_MANDIR=/tmp/_/share/man \
         -DINSTALL_PLUGINDIR=lib/mysql/plugin \
@@ -95,42 +103,72 @@ RUN export CPU=`cat /proc/cpuinfo | grep -c processor` && \
         -DINSTALL_MYSQLSHAREDIR=share/mysql \
         -DINSTALL_DOCDIR=/tmp/_/share/mysql/docs \
         -DINSTALL_SHAREDIR=share/mysql \
-        -DWITH_READLINE=ON \
-        -DWITH_ZLIB=system \
-        -DWITH_SSL=system \
-        -DWITH_LIBWRAP=OFF \
-        -DWITH_JEMALLOC=no \
-        -DWITH_EXTRA_CHARSETS=complex \
-        -DPLUGIN_ARCHIVE=STATIC \
-        -DPLUGIN_BLACKHOLE=DYNAMIC \
-        -DPLUGIN_INNOBASE=STATIC \
-        -DPLUGIN_PARTITION=AUTO \
+        -DCONNECT_WITH_MYSQL=ON \
+        -DCONNECT_WITH_LIBXML2=system \
+        -DCONNECT_WITH_ODBC=NO \
+        -DCONNECT_WITH_JDBC=NO \
+        -DENABLED_PROFILING=OFF \
+        -DENABLED_LOCAL_INFILE=ON \
+        -DENABLE_DEBUG_SYNC=OFF \
+        -DPLUGIN_ARCHIVE=YES \
+        -DPLUGIN_ARIA=YES \
+        -DPLUGIN_AUTH_GSSAPI=NO \
+        -DPLUGIN_AUTH_GSSAPI_CLIENT=OFF \
+        -DPLUGIN_BLACKHOLE=YES \
+        -DPLUGIN_CASSANDRA=NO \
         -DPLUGIN_CONNECT=NO \
-        -DPLUGIN_TOKUDB=NO \
-        -DPLUGIN_FEEDBACK=NO \
-        -DPLUGIN_OQGRAPH=NO \
+        -DPLUGIN_CRACKLIB_PASSWORD_CHECK=NO \
+        -DPLUGIN_CSV=YES \
         -DPLUGIN_FEDERATED=NO \
         -DPLUGIN_FEDERATEDX=NO \
-        -DWITHOUT_FEDERATED_STORAGE_ENGINE=1 \
-        -DWITHOUT_EXAMPLE_STORAGE_ENGINE=1 \
-        -DWITHOUT_PBXT_STORAGE_ENGINE=1 \
+        -DPLUGIN_FEEDBACK=NO \
+        -DPLUGIN_INNOBASE=STATIC \
+        -DPLUGIN_MROONGA=NO \
+        -DPLUGIN_MYISAM=YES \
+        -DPLUGIN_OQGRAPH=NO \
+        -DPLUGIN_PARTITION=AUTO \
+        -DPLUGIN_ROCKSDB=NO \
+        -DPLUGIN_SPHINX=NO \
+        -DPLUGIN_TOKUDB=NO \
+        -DWITH_ASAN=OFF \
         -DWITH_EMBEDDED_SERVER=OFF \
+        -DWITH_EXTRA_CHARSETS=complex \
+        -DWITH_INNODB_BZIP2=OFF \
+        -DWITH_INNODB_LZ4=OFF \
+        -DWITH_INNODB_LZMA=ON \
+        -DWITH_INNODB_LZO=OFF \
+        -DWITH_INNODB_SNAPPY=OFF \
+        -DWITH_JEMALLOC=NO \
+        -DWITH_LIBARCHIVE=system \
+        -DWITH_LIBNUMA=NO \
+        -DWITH_LIBWRAP=OFF \
+        -DWITH_LIBWSEP=OFF \
+        -DWITH_MARIABACKUP=ON \
+        -DWITH_PCRE=system \
+        -DWITH_READLINE=ON \
+        -DWITH_ROCKSDB_BZIP2=OFF \
+        -DWITH_ROCKSDB_JEMALLOC=OFF \
+        -DWITH_ROCKSDB_LZ4=OFF \
+        -DWITH_ROCKSDB_SNAPPY=OFF \
+        -DWITH_ROCKSDB_ZSTD=OFF \
+        -DWITH_SSL=bundled \
+        -DWITH_SYSTEMD=no \
         -DWITH_UNIT_TESTS=OFF \
-        -DENABLED_PROFILING=OFF \
-        -DENABLE_DEBUG_SYNC=OFF \
+        -DWITH_VALGRIND=OFF \
+        -DWITH_ZLIB=system \
+        -DWITHOUT_EXAMPLE_STORAGE_ENGINE=1 \
+        -DWITHOUT_FEDERATED_STORAGE_ENGINE=1 \
+        -DWITHOUT_PBXT_STORAGE_ENGINE=1 \
         && \
-    make -j$(getconf _NPROCESSORS_ONLN) && \
     \
-    # Install
+    make -j$(getconf _NPROCESSORS_ONLN) && \
     make install && \
     \
     # Patch for missing PAM Plugin
     sed -i 's/^.*auth_pam_tool_dir.*$/#auth_pam_tool_dir not exists/' /usr/bin/mysql_install_db && \
     \
     ### Fetch and Install MySQLTuner
-    mkdir -p /usr/src/mysqltuner && \
-    curl -sSL https://github.com/major/MySQLTuner-perl/archive/${MYSQLTUNER_VERSION}.tar.gz | tar xvfz - --strip 1 -C /usr/src/mysqltuner && \
-    cd /usr/src/mysqltuner && \
+    clone_git_repo "${MYSQLTUNER_REPO_URL}" "${MYSQLTUNER_VERSION}" && \
     mkdir -p /usr/share/mysqltuner && \
     cp -R basic_passwords.txt /usr/share/mysqltuner && \
     cp -R vulnerabilities.csv /usr/share/mysqltuner && \
@@ -141,41 +179,31 @@ RUN export CPU=`cat /proc/cpuinfo | grep -c processor` && \
     mkdir -p /usr/src/pbzip2 && \
     curl -ssL https://launchpad.net/pbzip2/1.1/1.1.13/+download/pbzip2-1.1.13.tar.gz | tar xvfz - --strip=1 -C /usr/src/pbzip2 && \
     cd /usr/src/pbzip2 && \
-    make && \
+    make -j$(getconf _NPROCESSORS_ONLN) && \
     make install && \
+    strip /usr/bin/pbzip2 && \
     \
-    # Fetch and compile pixz 
-    mkdir -p /usr/src/pixz && \
-    cd /usr/src/pixz && \
-    git clone https://github.com/vasi/pixz.git /usr/src/pixz && \
+    # Fetch and compile pixz
+    clone_git_repo "https://github.com/vasi/pixz" && \
     ./autogen.sh && \
     ./configure && \
     make -j$(getconf _NPROCESSORS_ONLN) && \
     make install && \
+    strip /usr/local/bin/pixz && \
     \
-    # Create needed directories and set permissions
-    mkdir -p /var/lib/mysql && \
-    mkdir -p /run/mysqld && \
-    mkdir /etc/mysql/conf.d && \
-    chown -R mariadb:mariadb /var/lib/mysql && \
-    chown -R mariadb:mariadb /run/mysqld && \
+    package remove .mariadb-builddeps && \
+    package cleanup && \
     \
-    # Clean everything
-    rm -rf /usr/src/* && \
-    rm -rf /tmp/* && \
-    rm -rf /usr/sql-bench && \
-    rm -rf /usr/mysql-test && \
-    rm -rf /usr/data && \
-    rm -rf /usr/lib/python2.7 && \
-    rm -rf /usr/bin/mysql_client_test && \
-    rm -rf /usr/bin/mysqltest && \
-    \
-    # Remove packages
-    apk del .mariadb-builddeps && \
-    rm -rf /var/cache/apk/*
+    rm -rf \
+            /root/.cache \
+            /tmp/* \
+            /usr/bin/mysql_client_test \
+            /usr/bin/mysqltest \
+            /usr/data \
+            /usr/mysql-test \
+            /usr/sql-bench \
+            /usr/src/*
 
-### Networking
 EXPOSE 3306
 
-### Add folders
-ADD install /
+COPY install /

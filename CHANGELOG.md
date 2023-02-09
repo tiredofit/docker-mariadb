@@ -1,4 +1,25 @@
-## 10.10-10.10-3.12 2023-02-08 <dave at tiredofit dot ca>
+## 10.10-4.0.0 2023-02-08 <dave at tiredofit dot ca>
+
+Major rewrite to the entire image bringing in a revamped way of dealing with multiple databases and users, bringing backup functionality up to parity with tiredofit/db-backup. Massive improvements with monitoring and safer initialization routines.
+Compatibility with older versions is possible, with the exception of DB Backup routines all being prefixed with DB_BACKUP_
+
+   ### Added
+      - Pull MariaDB source instead of tarball, and compile in extra features
+      - Switch to using bundled wolfSSL for TLS functions
+      - Bring to parity with tiredofit/db-backup for in container backups
+      - Zabbix Agent is now default and only supported way of doing metrics
+      - Multiple Database Support + User support by means of DB01_,DB02,etc prefixes. Also allows for updating permissions and adding databases on subsequent reboots instead of on first initialization.
+      - Make everything dynamic allowing for customization of configuration files, paths, data locations, socket locations.
+      - Rework all initializations to work in a protected space before actually starting up the final mysqld process (Creating Databases/Users/Enabling Monitoring)
+      - Monitoring is turnkey, user and password is automatically generated upon each container start to keep secrets from flying around
+      - Modernize image with latest functions from tiredofit base images
+      - Modernize Dockerfile to allow for cross distro compatibility
+      - Further secure system by removing anonymous and extra users
+      - Run as mariadb user, always, even when initializing
+      - Rewrite Zabbix templates
+
+
+## 10.10-3.12 2023-02-08 <dave at tiredofit dot ca>
 
    ### Changed
       - Isolate some db backup routines from container initialization

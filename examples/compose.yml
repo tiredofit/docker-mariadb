@@ -1,0 +1,51 @@
+services:
+  example-db:
+    image: tiredofit/mariadb:10.10
+    stop_grace_period: 3m
+    container_name: example-db
+    volumes:
+      #- ./dbbackup:/bacup
+      - ./db:/var/lib/mysql
+      - ./logs:/logs
+    environment:
+      - TIMEZONE=America/Vancouver
+      - CONTAINER_NAME=example-db
+
+      - ROOT_PASS=rootpassword
+
+      - DB_NAME=database
+      - DB_USER=user
+      - DB_PASS=password
+      ### OR
+      - DB01_NAME=database_one
+      - DB01_USER=database_userone
+      - DB01_PASS=password
+      - DB02_NAME=database_two
+      - DB02_USER=database_usertwo
+      - DB02_PASS=password
+      - DB03_NAME=database_three
+      - DB03_USER=database_userone
+      - DB03_PASS=password
+
+      - DB_BACKUP=TRUE
+      - DB_BACKUP_NAME=database_one
+      - DB_BACKUP_USER=databae_userone
+      - DB_BACKUP_PASS=password
+      ### OR
+      - DB_BACKUP_NAME=ALL
+      - DB_BACKUP_USER=root
+      - DB_BACKUP_PASS=rootpassword
+
+      - DB_BACKUP_DUMP_FREQ=1440
+      - DB_BACKUP_DUMP_BEGIN=2235
+
+      - DB_BACKUP_COMPRESSION=ZSTD
+      - DB_BACKUP_COMPRESSION_LEVEL=6
+    networks:
+      - services
+    restart: always
+
+networks:
+  services:
+    external: true
+

@@ -167,3 +167,5 @@ key_buffer = 16M
 #   The files must end with '.cnf', otherwise they'll be ignored.
 #
 
+## Include .conf files
+!includedir {{CONFIG_CUSTOM_PATH}}
