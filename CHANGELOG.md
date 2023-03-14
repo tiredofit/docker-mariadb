@@ -1,3 +1,11 @@
+## 10.8-4.0.1 2023-03-14 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Strip TCP check on mysql_upgrade
+      - Change Autoregister to mariadbmodern
+      - Strip suffix from IMAGE_NAME
+
+
 ## 10.8-4.0.0 2023-02-08 <dave at tiredofit dot ca>
 
 Major rewrite to the entire image bringing in a revamped way of dealing with multiple databases and users, bringing backup functionality up to parity with tiredofit/db-backup. Massive improvements with monitoring and safer initialization routines.
