@@ -16,7 +16,7 @@ ENV MARIADB_VERSION=${MARIADB_VERSION:-"10.10.3"} \
     ZABBIX_AGENT_TYPE=modern \
     CONTAINER_ENABLE_MESSAGING=FALSE \
     CONTAINER_ENABLE_SCHEDULING=TRUE \
-    IMAGE_NAME="tiredofit/mariadb:10.10" \
+    IMAGE_NAME="tiredofit/mariadb" \
     IMAGE_REPO_URL="https://github.com/tiredofit/docker-mariadb/"
 
 ### Install Required Dependencies
