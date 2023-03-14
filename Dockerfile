@@ -7,7 +7,7 @@ LABEL maintainer="Dave Conroy (github.com/tiredofit)"
 ARG MARIADB_VERSION
 ARG MYSQLTUNER_VERSION
 
-ENV MARIADB_VERSION=${MARIADB_VERSION:-"10.11.1"} \
+ENV MARIADB_VERSION=${MARIADB_VERSION:-"10.11.2"} \
     MYSQLTUNER_VERSION=${MYSQLTUNER_VERSION:-"v1.9.9"} \
     MARIADB_REPO_URL=https://github.com/MariaDB/server \
     MYSQLTUNER_REPO_URL=https://github.com/major/MySQLTuner-perl \
@@ -16,7 +16,7 @@ ENV MARIADB_VERSION=${MARIADB_VERSION:-"10.11.1"} \
     ZABBIX_AGENT_TYPE=modern \
     CONTAINER_ENABLE_MESSAGING=FALSE \
     CONTAINER_ENABLE_SCHEDULING=TRUE \
-    IMAGE_NAME="tiredofit/mariadb:10.11" \
+    IMAGE_NAME="tiredofit/mariadb" \
     IMAGE_REPO_URL="https://github.com/tiredofit/docker-mariadb/"
 
 ### Install Required Dependencies
