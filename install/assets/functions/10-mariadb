@@ -119,7 +119,7 @@ EOSQL
         rm -f "${monitoring_init_file}"
 
         print_debug "Configuring modern Zabbix agent"
-        mariadb_autoreg=mariadb
+        mariadb_autoreg=mariadbmodern
         mariadb_config=$(cat <<EOF
 Plugins.Mysql.Sessions.toi.Uri=unix:${SOCKET_PATH}/${SOCKET_FILE}
 Plugins.Mysql.Sessions.toi.User=zbx_monitor
@@ -178,7 +178,6 @@ initialize_mariadb() {
                     print_notice "Upgrading database files to '${MARIADB_VERSION}' version"
                     control_server start "--skip-grant-tables"
                     sanity_db
-                    db_ready mariadb
                     silent sudo -u mariadb \
                                         mysql_upgrade \
                                             -uroot \
