@@ -119,7 +119,7 @@ EOSQL
         rm -f "${monitoring_init_file}"
 
         print_debug "Configuring modern Zabbix agent"
-        mariadb_autoreg=mariadbmodern
+        mariadb_autoreg=mariadb
         mariadb_config=$(cat <<EOF
 Plugins.Mysql.Sessions.toi.Uri=unix:${SOCKET_PATH}/${SOCKET_FILE}
 Plugins.Mysql.Sessions.toi.User=zbx_monitor
