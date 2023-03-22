@@ -1,3 +1,9 @@
+## 10.5-4.0.2 2023-03-21 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Revert mariadb_autoreg to mariadb
+
+
 ## 10.5-4.0.1 2023-03-14 <dave at tiredofit dot ca>
 
    ### Changed
