@@ -291,6 +291,13 @@ backup_move_dbbackup() {
                 mkdir -p "${DB_BACKUP_DUMP_TARGET}"
                 mv "${DB_BACKUP_TEMP_LOCATION}"/*."${checksum_extension}" "${DB_BACKUP_DUMP_TARGET}"/
                 mv "${DB_BACKUP_TEMP_LOCATION}"/"${target}" "${DB_BACKUP_DUMP_TARGET}"/"${target}"
+                if var_true "${DB_BACKUP_CREATE_LATEST_SYMLINK}" ; then
+                    ln -sf "${DB_BACKUP_DUMP_TARGET}"/"${target}" "${DB_BACKUP_DUMP_TARGET}"/latest-"${ltarget}"
+                fi
+                if [ -n "${DB_BACKUP_ARCHIVE_TIME}" ] ; then
+                    mkdir -p "${DB_BACKUP_DUMP_TARGET_ARCHIVE}"
+                    find "${DB_BACKUP_DUMP_TARGET}"/  -maxdepth 1 -mmin +"${DB_BACKUP_ARCHIVE_TIME}" -iname "*" -exec mv {} "${DB_BACKUP_DUMP_TARGET_ARCHIVE}" \;
+                fi
             ;;
             "s3" | "minio" )
                 print_debug "Moving backup to S3 Bucket"
@@ -345,6 +352,7 @@ backup_prepare_dbbackup() {
     now=$(date +"%Y%m%d-%H%M%S")
     now_time=$(date +"%H:%M:%S")
     now_date=$(date +"%Y-%m-%d")
+    ltarget=${dbtype}_${DB_BACKUP_NAME,,}_${CONTAINER_NAME,,}
     target=${dbtype}_${DB_BACKUP_NAME,,}_${CONTAINER_NAME,,}_${now}.sql
 }
 
