@@ -1,3 +1,10 @@
+## 4.1.0 2023-03-30 <dave at tiredofit dot ca>
+
+   ### Added
+      - Add DB_BACKUP_CREATE_LATEST_SYMLINK for creating shortcuts to latest backup
+      - Add DB_BACKUP_ARCHIVE_TIME and DB_BACKUP_DUMP_TARGET_ARCHIVE to move backups into archive folder after however many minutes for better external backups
+
+
 ## 10.8-4.0.2 2023-03-21 <dave at tiredofit dot ca>
 
    ### Changed
