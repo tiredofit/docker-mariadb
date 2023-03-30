@@ -97,11 +97,8 @@ The following image tags are available along with their tagged release based on 
 | `10.10.x` | Alpine       | `:10.10`  |
 | `10.9.x`  | Alpine       | `:10.9`   |
 | `10.8.x`  | Alpine       | `:10.8`   |
-| `10.7.x`  | Alpine       | `:10.7`   |
 | `10.6.x`  | Alpine       | `:10.6`   |
 | `10.5.x`  | Alpine       | `:10.5`   |
-| `10.4.x`  | Alpine       | `:10.4`   |
-| `10.3.x`  | Alpine       | `:10.3`   |
 
 #### Multi Architecture
 Images are built primarily for `amd64` architecture, and may also include builds for `arm/v7`, `arm64` and others. These variants are all unsupported. Consider [sponsoring](https://github.com/sponsors/tiredofit) my work so that I can work with various hardware. To see if this image supports multiple architecures, type `docker manifest (image):(tag)`
@@ -216,6 +213,7 @@ The backup functionality is a subset of the [tiredofit/db-backup](https://github
 | `DB_BACKUP_MODE`               | `AUTO` mode to use internal scheduling routines or `MANUAL` to simply use this as manual backups only executed by your own means | `AUTO`          |
 | `DB_BACKUP_MANUAL_RUN_FOREVER` | `TRUE` or `FALSE` if you wish to try to make the container exit after the backup                                                 | `TRUE`          |
 | `DB_BACKUP_TEMP_LOCATION`      | Perform Backups and Compression in this temporary directory                                                                      | `/tmp/backups/` |
+| `DB_BACKUP_CREATE_LATEST_SYMLINK` | Create a symbolic link pointing to last backup in this format: `latest-(DB_TYPE)-(DB_NAME)-(DB_HOST)`                            | `TRUE`          |
 | `DEBUG_MODE`                   | If set to `true`, print copious shell script messages to the container log. Otherwise only basic messages are printed.           | `FALSE`         |
 | `DB_BACKUP_PRE_SCRIPT`         | Fill this variable in with a command to execute pre backing up                                                                   |                 |
 | `DB_BACKUP_POST_SCRIPT`        | Fill this variable in with a command to execute post backing up                                                                  |                 |
@@ -237,7 +235,9 @@ The backup functionality is a subset of the [tiredofit/db-backup](https://github
 |                          | Absolute HHMM, e.g. `2330` or `0415`                                                                                                                                                               |           |
 |                          | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half                                                     |           |
 | `DB_BACKUP_DUMP_TARGET`  | Directory where the database dumps are kept.                                                                                                                                                       | `/backup` |
+| `DB_BACKUP_DUMP_TARGET_ARCHIVE` | Optional Directory where the database dumps archives are kept.                                                                                                                                      |
 | `DB_BACKUP_CLEANUP_TIME` | Value in minutes to delete old backups (only fired when dump freqency fires). 1440 would delete anything above 1 day old. You don't need to set this variable if you want to hold onto everything. | `FALSE`   |
+| `DB_ARCHIVE_TIME`        | Value in minutes to move all files files older than (x) from `DB_BACKUP_DUMP_TARGET` to `DB_BACKUP_DUMP_TARGET_ARCHIVE` - which is useful when pairing against an external backup system.
 
 ##### Other Backup Options
 | Parameter                                | Description                                                                                                                  | Default        |
