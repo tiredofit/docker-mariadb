@@ -1,3 +1,9 @@
+## 10.8-4.1.1 2023-04-12 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Add additional FLUSH PRIVILEGES statement for Zabbix monitoring
+
+
 ## 4.1.0 2023-03-30 <dave at tiredofit dot ca>
 
    ### Added
