@@ -109,6 +109,7 @@ configure_monitoring() {
         cat <<EOSQL | silent sudo -u mariadb tee "${monitoring_init_file}"
 USE mysql;
 DELETE FROM mysql.user WHERE User='zbx_monitor';
+FLUSH PRIVILEGES;
 CREATE USER 'zbx_monitor'@'%' IDENTIFIED BY '${monitor_password}';
 FLUSH PRIVILEGES;
 GRANT REPLICATION CLIENT,PROCESS,SHOW DATABASES,SHOW VIEW ON *.* TO 'zbx_monitor'@'%';
