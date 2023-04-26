@@ -149,15 +149,15 @@ Be sure to view the following repositories to understand all the customizable op
 
 #### MariaDB Options
 
-| Parameter          | Description                                                                                                                            | Default              |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| `CHARACTER_SET`    | Set Default Character Set                                                                                                              | `utf8mb4`            |
-| `COLLATION`        | Set Default Collation                                                                                                                  | `utf8mb4_general_ci` |
-| `DB_AUTO_UPGRADE`  | If MariaDB has changed from first time image has been used, automatically upgrade DBs and tables to latest versions - `TRUE` / `FALSE` | `TRUE`               |
-| `DB_CONFIGURATION` | Type of Configuration - `standard`, or `default`                                                                                       | `standard`           |
-| `LISTEN_PORT`      | Listening Port                                                                                                                         | `3306`               |
-| `ROOT_PASS`        | Root Password for Instance (e.g. password)                                                                                             |                      |
-| `MYSQLD_ARGS`      | Add extra arguments to the mariadb execution                                                                                           |                      |
+| Parameter          | Description                                                                                                                            | Default              | `_FILE` |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ------- |
+| `CHARACTER_SET`    | Set Default Character Set                                                                                                              | `utf8mb4`            |         |
+| `COLLATION`        | Set Default Collation                                                                                                                  | `utf8mb4_general_ci` |         |
+| `DB_AUTO_UPGRADE`  | If MariaDB has changed from first time image has been used, automatically upgrade DBs and tables to latest versions - `TRUE` / `FALSE` | `TRUE`               |         |
+| `DB_CONFIGURATION` | Type of Configuration - `standard`, or `default`                                                                                       | `standard`           |         |
+| `LISTEN_PORT`      | Listening Port                                                                                                                         | `3306`               |         |
+| `ROOT_PASS`        | Root Password for Instance (e.g. password)                                                                                             |                      | x       |
+| `MYSQLD_ARGS`      | Add extra arguments to the mariadb execution                                                                                           |                      |         |
 
 * With regards to `DB_CONFIGURATION`
   - `default` - Means the default my.cnf file from MariaDB
@@ -167,26 +167,26 @@ Be sure to view the following repositories to understand all the customizable op
 
 Automatically create user databases on startup. This can be done on each container start, and then removed on subsequent starts if desired.
 
-| Parameter   | Description                               | Default |
-| ----------- | ----------------------------------------- | ------- |
-| `CREATE_DB` | Automatically create databases on startup | `TRUE`  |
-| `DB_NAME`   | Database Name e.g. `database`             |         |
-| `DB_USER`   | Database User e.g. `user`                 |         |
-| `DB_PASS`   | Database Pass e.g. `password`             |         |
+| Parameter   | Description                               | Default | `_FILE` |
+| ----------- | ----------------------------------------- | ------- | ------- |
+| `CREATE_DB` | Automatically create databases on startup | `TRUE`  |         |
+| `DB_NAME`   | Database Name e.g. `database`             |         | x       |
+| `DB_USER`   | Database User e.g. `user`                 |         | x       |
+| `DB_PASS`   | Database Pass e.g. `password`             |         | x       |
 
 **OR**
 
 Create multiple databases and different usernames and passwords to access. You can share usernames and passwords for multiple databases by using the same user and password in each entry.
 
-| Parameter   | Description                                        | Default |
-| ----------- | -------------------------------------------------- | ------- |
-| `DB01_NAME` | First Database Name e.g. `database1`               |         |
-| `DB01_USER` | First Database User e.g. `user1`                   |         |
-| `DB01_PASS` | First Database Pass e.g. `password1`               |         |
-| `DB02_NAME` | Second Database Name e.g. `database1`              |         |
-| `DB02_USER` | Second Database User e.g. `user2`                  |         |
-| `DB02_PASS` | Second Database Pass e.g. `password2`              |         |
-| `DBXX_...`  | As above, should be able to go all the way to `99` |         |
+| Parameter   | Description                                        | Default | `_FILE` |
+| ----------- | -------------------------------------------------- | ------- | ------- |
+| `DB01_NAME` | First Database Name e.g. `database1`               |         | x       |
+| `DB01_USER` | First Database User e.g. `user1`                   |         | x       |
+| `DB01_PASS` | First Database Pass e.g. `password1`               |         | x       |
+| `DB02_NAME` | Second Database Name e.g. `database1`              |         | x       |
+| `DB02_USER` | Second Database User e.g. `user2`                  |         | x       |
+| `DB02_PASS` | Second Database Pass e.g. `password2`              |         | x       |
+| `DBXX_...`  | As above, should be able to go all the way to `99` |         |         |
 
 
 #### Logging Options
@@ -207,37 +207,37 @@ Create multiple databases and different usernames and passwords to access. You c
 The backup functionality is a subset of the [tiredofit/db-backup](https://github.com/tiredofit/docker-db-backup) image. Please have a peek at the README to understand ways to use. All features have been carried over with the exception of being able to backup remote systems - It is hardcoded to connect to the MariaDB socket not requiring DB_HOST/DB_PORT variables.
 
 
-| Parameter                      | Description                                                                                                                      | Default         |
-| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- | --------------- |
-| `DB_BACKUP_BACKUP_LOCATION`    | Backup to `FILESYSTEM` or `S3` compatible services like S3, Minio, Wasabi                                                        | `FILESYSTEM`    |
-| `DB_BACKUP_MODE`               | `AUTO` mode to use internal scheduling routines or `MANUAL` to simply use this as manual backups only executed by your own means | `AUTO`          |
-| `DB_BACKUP_MANUAL_RUN_FOREVER` | `TRUE` or `FALSE` if you wish to try to make the container exit after the backup                                                 | `TRUE`          |
-| `DB_BACKUP_TEMP_LOCATION`      | Perform Backups and Compression in this temporary directory                                                                      | `/tmp/backups/` |
+| Parameter                         | Description                                                                                                                      | Default         |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| `DB_BACKUP_BACKUP_LOCATION`       | Backup to `FILESYSTEM` or `S3` compatible services like S3, Minio, Wasabi                                                        | `FILESYSTEM`    |
+| `DB_BACKUP_MODE`                  | `AUTO` mode to use internal scheduling routines or `MANUAL` to simply use this as manual backups only executed by your own means | `AUTO`          |
+| `DB_BACKUP_MANUAL_RUN_FOREVER`    | `TRUE` or `FALSE` if you wish to try to make the container exit after the backup                                                 | `TRUE`          |
+| `DB_BACKUP_TEMP_LOCATION`         | Perform Backups and Compression in this temporary directory                                                                      | `/tmp/backups/` |
 | `DB_BACKUP_CREATE_LATEST_SYMLINK` | Create a symbolic link pointing to last backup in this format: `latest-(DB_TYPE)-(DB_NAME)-(DB_HOST)`                            | `TRUE`          |
-| `DEBUG_MODE`                   | If set to `true`, print copious shell script messages to the container log. Otherwise only basic messages are printed.           | `FALSE`         |
-| `DB_BACKUP_PRE_SCRIPT`         | Fill this variable in with a command to execute pre backing up                                                                   |                 |
-| `DB_BACKUP_POST_SCRIPT`        | Fill this variable in with a command to execute post backing up                                                                  |                 |
-| `DB_BACKUP_SPLIT_DB`           | For each backup, create a new archive. `TRUE` or `FALSE` (MySQL and Postgresql Only)                                             | `TRUE`          |
+| `DEBUG_MODE`                      | If set to `true`, print copious shell script messages to the container log. Otherwise only basic messages are printed.           | `FALSE`         |
+| `DB_BACKUP_PRE_SCRIPT`            | Fill this variable in with a command to execute pre backing up                                                                   |                 |
+| `DB_BACKUP_POST_SCRIPT`           | Fill this variable in with a command to execute post backing up                                                                  |                 |
+| `DB_BACKUP_SPLIT_DB`              | For each backup, create a new archive. `TRUE` or `FALSE` (MySQL and Postgresql Only)                                             | `TRUE`          |
 
 ##### Database Options
-| Parameter                | Description                                                                                                                                 | Default |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| `DB_BACKUP_NAME`         | Schema Name e.g. `database` or `ALL` to backup all databases the user has access to. Backup multiple by seperating with commas eg `db1,db2` |         |
-| `DB_BACKUP_NAME_EXCLUDE` | If using `ALL` - use this as to exclude databases seperated via commas from being backed up                                                 |         |
-| `DB_BACKUP_USER`         | username for the database(s) - Can use `root`                                                                                               |         |
-| `DB_BACKUP_PASS`         | (optional if DB doesn't require it) password for the database                                                                               |         |
+| Parameter                | Description                                                                                                                                 | Default | `_FILE` |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------- |
+| `DB_BACKUP_NAME`         | Schema Name e.g. `database` or `ALL` to backup all databases the user has access to. Backup multiple by seperating with commas eg `db1,db2` |         |  |
+| `DB_BACKUP_NAME_EXCLUDE` | If using `ALL` - use this as to exclude databases seperated via commas from being backed up                                                 |         |  |
+| `DB_BACKUP_USER`         | username for the database(s) - Can use `root`                                                                                               |         | x|
+| `DB_BACKUP_PASS`         | (optional if DB doesn't require it) password for the database                                                                               |         | x|
 
 ##### Scheduling Options
-| Parameter                | Description                                                                                                                                                                                        | Default   |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
-| `DB_BACKUP_DUMP_FREQ`    | How often to do a dump, in minutes after the first backup. Defaults to 1440 minutes, or once per day.                                                                                              | `1440`    |
-| `DB_BACKUP_DUMP_BEGIN`   | What time to do the first dump. Defaults to immediate. Must be in one of two formats                                                                                                               |           |
-|                          | Absolute HHMM, e.g. `2330` or `0415`                                                                                                                                                               |           |
-|                          | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half                                                     |           |
-| `DB_BACKUP_DUMP_TARGET`  | Directory where the database dumps are kept.                                                                                                                                                       | `/backup` |
-| `DB_BACKUP_DUMP_TARGET_ARCHIVE` | Optional Directory where the database dumps archives are kept.                                                                                                                                      |
-| `DB_BACKUP_CLEANUP_TIME` | Value in minutes to delete old backups (only fired when dump freqency fires). 1440 would delete anything above 1 day old. You don't need to set this variable if you want to hold onto everything. | `FALSE`   |
-| `DB_ARCHIVE_TIME`        | Value in minutes to move all files files older than (x) from `DB_BACKUP_DUMP_TARGET` to `DB_BACKUP_DUMP_TARGET_ARCHIVE` - which is useful when pairing against an external backup system.
+| Parameter                       | Description                                                                                                                                                                                        | Default   |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| `DB_BACKUP_DUMP_FREQ`           | How often to do a dump, in minutes after the first backup. Defaults to 1440 minutes, or once per day.                                                                                              | `1440`    |
+| `DB_BACKUP_DUMP_BEGIN`          | What time to do the first dump. Defaults to immediate. Must be in one of two formats                                                                                                               |           |
+|                                 | Absolute HHMM, e.g. `2330` or `0415`                                                                                                                                                               |           |
+|                                 | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half                                                     |           |
+| `DB_BACKUP_DUMP_TARGET`         | Directory where the database dumps are kept.                                                                                                                                                       | `/backup` |
+| `DB_BACKUP_DUMP_TARGET_ARCHIVE` | Optional Directory where the database dumps archives are kept.                                                                                                                                     |
+| `DB_BACKUP_CLEANUP_TIME`        | Value in minutes to delete old backups (only fired when dump freqency fires). 1440 would delete anything above 1 day old. You don't need to set this variable if you want to hold onto everything. | `FALSE`   |
+| `DB_ARCHIVE_TIME`               | Value in minutes to move all files files older than (x) from `DB_BACKUP_DUMP_TARGET` to `DB_BACKUP_DUMP_TARGET_ARCHIVE` - which is useful when pairing against an external backup system.          |
 
 ##### Other Backup Options
 | Parameter                                | Description                                                                                                                  | Default        |
@@ -255,19 +255,19 @@ The backup functionality is a subset of the [tiredofit/db-backup](https://github
 
 If `DB_BACKUP_LOCATION` = `S3` then the following options are used.
 
-| Parameter                       | Description                                                                               | Default |
-| ------------------------------- | ----------------------------------------------------------------------------------------- | ------- |
-| `DB_BACKUP_S3_BUCKET`           | S3 Bucket name e.g. `mybucket`                                                            |         |
-| `DB_BACKUP_S3_KEY_ID`           | S3 Key ID (Optional)                                                                      |         |
-| `DB_BACKUP_S3_KEY_SECRET`       | S3 Key Secret (Optional)                                                                  |         |
-| `DB_BACKUP_S3_PATH`             | S3 Pathname to save to (must NOT end in a trailing slash e.g. '`backup`')                 |         |
-| `DB_BACKUP_S3_REGION`           | Define region in which bucket is defined. Example: `ap-northeast-2`                       |         |
-| `DB_BACKUP_S3_HOST`             | Hostname (and port) of S3-compatible service, e.g. `minio:8080`. Defaults to AWS.         |         |
-| `DB_BACKUP_S3_PROTOCOL`         | Protocol to connect to `S3_HOST`. Either `http` or `https`. Defaults to `https`.          | `https` |
-| `DB_BACKUP_S3_EXTRA_OPTS`       | Add any extra options to the end of the `aws-cli` process execution                       |         |
-| `DB_BACKUP_S3_CERT_CA_FILE`     | Map a volume and point to your custom CA Bundle for verification e.g. `/certs/bundle.pem` |         |
-| _*OR*_                          |                                                                                           |         |
-| `DB_BACKUP_S3_CERT_SKIP_VERIFY` | Skip verifying self signed certificates when connecting                                   | `TRUE`  |
+| Parameter                       | Description                                                                               | Default | `_FILE` |
+| ------------------------------- | ----------------------------------------------------------------------------------------- | ------- | ---- |
+| `DB_BACKUP_S3_BUCKET`           | S3 Bucket name e.g. `mybucket`                                                            |         | x |
+| `DB_BACKUP_S3_KEY_ID`           | S3 Key ID (Optional)                                                                      |         | x |
+| `DB_BACKUP_S3_KEY_SECRET`       | S3 Key Secret (Optional)                                                                  |         | x |
+| `DB_BACKUP_S3_PATH`             | S3 Pathname to save to (must NOT end in a trailing slash e.g. '`backup`')                 |         | x |
+| `DB_BACKUP_S3_REGION`           | Define region in which bucket is defined. Example: `ap-northeast-2`                       |         | x |
+| `DB_BACKUP_S3_HOST`             | Hostname (and port) of S3-compatible service, e.g. `minio:8080`. Defaults to AWS.         |         | x |
+| `DB_BACKUP_S3_PROTOCOL`         | Protocol to connect to `S3_HOST`. Either `http` or `https`. Defaults to `https`.          | `https` | x |
+| `DB_BACKUP_S3_EXTRA_OPTS`       | Add any extra options to the end of the `aws-cli` process execution                       |         | x |
+| `DB_BACKUP_S3_CERT_CA_FILE`     | Map a volume and point to your custom CA Bundle for verification e.g. `/certs/bundle.pem` |         | x |
+| _*OR*_                          |                                                                                           |         |  |
+| `DB_BACKUP_S3_CERT_SKIP_VERIFY` | Skip verifying self signed certificates when connecting                                   | `TRUE`  |  |
 
 - When `DB_BACKUP_S3_KEY_ID` and/or `DB_BACKUP_S3_KEY_SECRET` is not set, will try to use IAM role assigned (if any) for uploading the backup files to S3 bucket.
 
@@ -278,11 +278,11 @@ Support to upload backup files with [blobxfer](https://github.com/Azure/blobxfer
 
 If `DB_BACKUP_BACKUP_LOCATION` = `blobxfer` then the following options are used.
 
-| Parameter                                | Description                                 | Default             |
-| ---------------------------------------- | ------------------------------------------- | ------------------- |
-| `DB_BACKUP_BLOBXFER_STORAGE_ACCOUNT`     | Microsoft Azure Cloud storage account name. |                     |
-| `DB_BACKUP_BLOBXFER_STORAGE_ACCOUNT_KEY` | Microsoft Azure Cloud storage account key.  |                     |
-| `DB_BACKUP_BLOBXFER_REMOTE_PATH`         | Remote Azure path                           | `/docker-db-backup` |
+| Parameter                                | Description                                 | Default             | `_FILE` |
+| ---------------------------------------- | ------------------------------------------- | ------------------- | ------- |
+| `DB_BACKUP_BLOBXFER_STORAGE_ACCOUNT`     | Microsoft Azure Cloud storage account name. |                     | x|
+| `DB_BACKUP_BLOBXFER_STORAGE_ACCOUNT_KEY` | Microsoft Azure Cloud storage account key.  |                     | x|
+| `DB_BACKUP_BLOBXFER_REMOTE_PATH`         | Remote Azure path                           | `/docker-db-backup` |  |
 
 > This service uploads files from backup targed directory `DB_BACKUP_DUMP_TARGET`.
 > If the a cleanup configuration in `DB_BACKUP_CLEANUP_TIME` is defined, the remote directory on Azure storage will also be cleaned automatically.

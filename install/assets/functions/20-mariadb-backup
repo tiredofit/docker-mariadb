@@ -5,7 +5,11 @@ backup_bootstrap_variables() {
         "mysql" | "mariadb" )
             dbtype=mysql
             sanity_var DB_BACKUP_NAME "Database Name to backup. Multiple seperated by commas"
-            [[ ( -n "${DB_BACKUP_PASS}" ) || ( -n "${DB_BACKUP_PASS_FILE}" ) ]] && file_env 'DB_BACKUP_PASS'
+            transform_file_var \
+                            DB_BACKUP_EXTRA_OPTS \
+                            DB_BACKUP_NAME \
+                            DB_BACKUP_USER \
+                            DB_BACKUP_PASS
             [[ ( -n "${DB_BACKUP_PASS}" ) ]] && export MYSQL_PWD=${DB_BACKUP_PASS}
             if var_true "${DB_BACKUP_MYSQL_ENABLE_TLS}" ; then
                 if [ -n "${DB_BACKUP_MYSQL_TLS_CA_FILE}" ] ; then
@@ -27,15 +31,24 @@ backup_bootstrap_variables() {
                 fi
             fi
         ;;
+
         * )
             print_error "I don't recognize 'DB_BACKUP_TYPE=${DB_BACKUP_TYPE}' - Exitting.."
             exit 99
         ;;
     esac
 
-    if [ "${DB_BACKUP_BACKUP_LOCATION,,}" = "s3" ] || [ "${DB_BACKUP_BACKUP_LOCATION,,}" = "minio" ] && [ -n "${DB_BACKUP_S3_KEY_ID}" ] && [ -n "${DB_BACKUP_S3_KEY_SECRET}" ]; then
-        file_env 'DB_BACKUP_S3_KEY_ID'
-        file_env 'DB_BACKUP_S3_KEY_SECRET'
+    if [ "${DB_BACKUP_BACKUP_LOCATION,,}" = "s3" ] || [ "${DB_BACKUP_BACKUP_LOCATION,,}" = "minio" ] ; then
+        transform_file_var \
+                        DB_BACKUP_S3_EXTRA_OPTS \
+                        DB_BACKUP_S3_KEY_ID \
+                        DB_BACKUP_S3_KEY_SECRET
+    fi
+
+    if [ "${DB_BACKUP_LOCATION,,}" = "blobxfer" ] ; then
+        transform_file_var \
+                        DB_BACKUP_BLOBXFER_STORAGE_ACCOUNT \
+                        DB_BACKUP_BLOBXFER_STORAGE_KEY
     fi
 }
 
