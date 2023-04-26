@@ -1,3 +1,9 @@
+## 10.11-4.2.0 2023-04-26 <dave at tiredofit dot ca>
+
+   ### Added
+      - Add support for _FILE environment variables
+
+
 ## 10.11-4.1.1 2023-04-12 <dave at tiredofit dot ca>
 
    ### Added

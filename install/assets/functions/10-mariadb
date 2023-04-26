@@ -39,6 +39,12 @@ bootstrap_filesystem() {
 }
 
 bootstrap_variables() {
+    transform_file_var \
+                    MYSQL_DATABASE \
+                    MYSQL_PASSWORD \
+                    MYSQL_ROOT_PASSWORD \
+                    MYSQL_USER
+
     if [ -n "$MYSQL_ROOT_PASSWORD" ]; then
         ROOT_PASS=${MYSQL_ROOT_PASSWORD}
     fi
@@ -54,6 +60,9 @@ bootstrap_variables() {
     if [ -n "$MYSQL_PASSWORD" ]; then
         DB_PASS=${MYSQL_PASSWORD}
     fi
+
+    transform_file_var \
+                    ROOT_PASS
 }
 
 configure_mariadb() {
@@ -209,7 +218,6 @@ initialize_mariadb() {
     else
         print_warn "MariaDB data directory is not found, creating initial DB(s)"
         sanity_var ROOT_PASS "Root Password"
-        sanity_var DB_PASS "Database Password"
         silent s6-setuidgid mariadb mysql_install_db \
             --user=mariadb \
             --basedir=/usr \
@@ -253,7 +261,10 @@ EOSQL
 create_databases() {
     if var_true "${CREATE_DB}" ; then
         control_server start "--skip-grant-tables"
-
+        transform_file_var \
+                        DB_NAME \
+                        DB_USER \
+                        DB_PASS
         if [ -n "${DB_NAME}" ] && [ -z "${DB01_NAME}" ] ; then export DB01_NAME="${DB_NAME}" ; unset DB_NAME ; fi
         if [ -n "${DB_USER}" ] && [ -z "${DB01_USER}" ] ; then export DB01_USER="${DB_USER}" ; unset DB_USER ; fi
         if [ -n "${DB_PASS}" ] && [ -z "${DB01_PASS}" ] ; then export DB01_PASS="${DB_PASS}" ; unset DB_PASS ; fi
@@ -261,11 +272,12 @@ create_databases() {
         dbnum=$(printenv | sort | grep -cE '^DB([0-9].)_NAME')
             for (( i = 01; i <= dbnum; i++ )) ; do
                 i=$(printf "%02d" $i)
-                file_env "DB${i}_NAME"
+                transform_file_var \
+                                DB${i}_NAME \
+                                DB${i}_USER \
+                                DB${i}_PASS
                 DB_NAME=DB${i}_NAME
-                file_env "DB${i}_USER"
                 DB_USER=DB${i}_USER
-                file_env "DB${i}_PASS"
                 DB_PASS=DB${i}_PASS
 
                 if [ -n "${!DB_NAME}" ] ; then
