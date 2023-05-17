@@ -120,8 +120,10 @@ USE mysql;
 DELETE FROM mysql.user WHERE User='zbx_monitor';
 FLUSH PRIVILEGES;
 CREATE USER 'zbx_monitor'@'%' IDENTIFIED BY '${monitor_password}';
+CREATE USER 'zbx_monitor'@'localhost' IDENTIFIED BY '${monitor_password}';
 FLUSH PRIVILEGES;
 GRANT REPLICATION CLIENT,PROCESS,SHOW DATABASES,SHOW VIEW ON *.* TO 'zbx_monitor'@'%';
+GRANT REPLICATION CLIENT,PROCESS,SHOW DATABASES,SHOW VIEW ON *.* TO 'zbx_monitor'@'localhost';
 EOSQL
 
         control_server start "--init-file=${monitoring_init_file}"

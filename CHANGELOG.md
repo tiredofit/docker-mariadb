@@ -1,3 +1,9 @@
+## 10.10-4.2.2 2023-05-17 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Add additional failsafe GRANT statement for zbx_monitor access
+
+
 ## 10.10-4.2.1 2023-05-10 <dave at tiredofit dot ca>
 
    ### Changed
