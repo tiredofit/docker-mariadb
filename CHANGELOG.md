@@ -1,3 +1,9 @@
+## 10.11-4.2.1 2023-05-17 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Add extra grant option for Zabbix monitoring to allow for Active monitoring
+
+
 ## 10.11-4.2.1 2023-05-10 <dave at tiredofit dot ca>
 
    ### Changed
