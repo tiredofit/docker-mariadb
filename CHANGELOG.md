@@ -1,3 +1,11 @@
+## 10.11-4.2.5 2023-11-14 <dave at tiredofit dot ca>
+
+   ### Added
+      - armv8/aarch64 support
+      - MySQL Tuner 2.2.12
+      - MariaDB 10.11.6
+
+
 ## 10.11-4.2.4 2023-08-14 <dave at tiredofit dot ca>
 
    ### Added
