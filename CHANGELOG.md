@@ -1,3 +1,10 @@
+## 10.11-4.2.5 2023-11-14 <dave at tiredofit dot ca>
+
+   ### Added
+      - MariaDB 10.6.16
+      - MySQL Tuner 2.2.12
+
+
 ## 10.6-4.2.4 2023-08-14 <dave at tiredofit dot ca>
 
    ### Added
