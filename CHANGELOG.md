@@ -1,3 +1,9 @@
+## 10.11-4.2.7 2023-11-20 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Fix issues with creating new databases on first install
+
+
 ## 10.11-4.2.6 2023-11-20 <dave at tiredofit dot ca>
 
    ### Changed

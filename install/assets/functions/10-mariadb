@@ -192,8 +192,8 @@ initialize_mariadb() {
                     sanity_db
                     silent sudo -u mariadb \
                                         mysql_upgrade \
-                                            -uroot \
-                                            --silent
+                                                    -uroot \
+                                                    --silent
                     exitcode_upgrade=$?
                     control_server stop
                     if [ "${exitcode_upgrade}" != "0" ] ; then
@@ -220,6 +220,7 @@ initialize_mariadb() {
     else
         print_warn "MariaDB data directory is not found, creating initial DB(s)"
         sanity_var ROOT_PASS "Root Password"
+
         silent s6-setuidgid mariadb mysql_install_db \
             --user=mariadb \
             --basedir=/usr \
@@ -247,12 +248,12 @@ EOSQL
             init_import_file="${init_file}"
         fi
         s6-setuidgid mariadb \
-                                    /usr/bin/mysqld \
-                                        --bootstrap \
-                                        --skip-name-resolve \
-                                        --skip-networking=on \
-                                        --user=mariadb \
-                                        < "${init_import_file}"
+                                /usr/bin/mysqld \
+                                    --bootstrap \
+                                    --skip-name-resolve \
+                                    --skip-networking=on \
+                                    --user=mariadb \
+                                    < "${init_import_file}"
 
         echo "${MARIADB_VERSION} first installed on $(TZ=${TIMEZONE} date +'%Y-%m-%d %H:%M:%S %Z')" > "${DATA_PATH}".version
     fi
@@ -264,9 +265,9 @@ create_databases() {
     if var_true "${CREATE_DB}" ; then
         control_server start "--skip-grant-tables"
         transform_file_var \
-                        DB_NAME \
-                        DB_USER \
-                        DB_PASS
+                            DB_NAME \
+                            DB_USER \
+                            DB_PASS
         if [ -n "${DB_NAME}" ] && [ -z "${DB01_NAME}" ] ; then export DB01_NAME="${DB_NAME}" ; unset DB_NAME ; fi
         if [ -n "${DB_USER}" ] && [ -z "${DB01_USER}" ] ; then export DB01_USER="${DB_USER}" ; unset DB_USER ; fi
         if [ -n "${DB_PASS}" ] && [ -z "${DB01_PASS}" ] ; then export DB01_PASS="${DB_PASS}" ; unset DB_PASS ; fi
@@ -275,9 +276,9 @@ create_databases() {
             for (( i = 01; i <= dbnum; i++ )) ; do
                 i=$(printf "%02d" $i)
                 transform_file_var \
-                                DB${i}_NAME \
-                                DB${i}_USER \
-                                DB${i}_PASS
+                                    DB${i}_NAME \
+                                    DB${i}_USER \
+                                    DB${i}_PASS
                 DB_NAME=DB${i}_NAME
                 DB_USER=DB${i}_USER
                 DB_PASS=DB${i}_PASS
