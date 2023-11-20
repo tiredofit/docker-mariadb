@@ -1,3 +1,9 @@
+## 10.11-4.2.6 2023-11-20 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Fix MariaDB startup routine
+
+
 ## 10.11-4.2.5 2023-11-14 <dave at tiredofit dot ca>
 
    ### Added
