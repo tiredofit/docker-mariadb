@@ -164,9 +164,6 @@ RUN source /assets/functions/00-container && \
     make -j$(getconf _NPROCESSORS_ONLN) && \
     make install && \
     \
-    # Patch for missing PAM Plugin
-    sed -i 's/^.*auth_pam_tool_dir.*$/#auth_pam_tool_dir not exists/' /usr/bin/mysql_install_db && \
-    \
     ### Fetch and Install MySQLTuner
     clone_git_repo "${MYSQLTUNER_REPO_URL}" "${MYSQLTUNER_VERSION}" && \
     mkdir -p /usr/share/mysqltuner && \
