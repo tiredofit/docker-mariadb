@@ -1,3 +1,9 @@
+## 10.6-4.2.6 2023-11-20 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Fix for MariaDB startup
+
+
 ## 10.6-4.2.5 2023-11-14 <dave at tiredofit dot ca>
 
    ### Added

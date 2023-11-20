@@ -12,7 +12,7 @@ if [ -n "${MYSQLD_ARGS}" ]; then start_string="with extra arguments '${MYSQLD_AR
 print_start "Starting MariaDB ${MARIADB_VERSION} ${start_string}"
 silent exec s6-setuidgid mariadb \
                                     /usr/bin/mysqld \
-                                                    --console
+                                                    --console \
                                                     --defaults-file="${CONFIG_PATH}"/"${CONFIG_FILE}" \
                                                     --user=mariadb \
                                                     --skip-name-resolve ${MYSQLD_ARGS}
