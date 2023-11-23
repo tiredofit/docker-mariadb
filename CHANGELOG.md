@@ -1,3 +1,9 @@
+## 10.6-4.2.8 2023-11-23 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Switch 'localhost' to 127.0.0.1
+
+
 ## 10.6-4.2.7 2023-11-20 <dave at tiredofit dot ca>
 
    ### Changed
