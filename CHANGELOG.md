@@ -1,3 +1,9 @@
+## 10.11-4.2.8 2023-11-23 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Change localhost permissions to 127.0.0.1
+
+
 ## 10.11-4.2.7 2023-11-20 <dave at tiredofit dot ca>
 
    ### Changed
