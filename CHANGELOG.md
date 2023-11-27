@@ -1,3 +1,10 @@
+## 10.6-4.2.9 2023-11-27 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Fix issue with 4.2.8 and allow both 127.0.0.1 AND localhost permissions
+      - Fix issue with Root password not being written properly from 4.0.0 release
+
+
 ## 10.6-4.2.8 2023-11-23 <dave at tiredofit dot ca>
 
    ### Changed

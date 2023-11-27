@@ -121,9 +121,11 @@ DELETE FROM mysql.user WHERE User='zbx_monitor';
 FLUSH PRIVILEGES;
 CREATE USER 'zbx_monitor'@'%' IDENTIFIED BY '${monitor_password}';
 CREATE USER 'zbx_monitor'@'127.0.0.1' IDENTIFIED BY '${monitor_password}';
+CREATE USER 'zbx_monitor'@'localhost' IDENTIFIED BY '${monitor_password}';
 FLUSH PRIVILEGES;
 GRANT REPLICATION CLIENT,PROCESS,SHOW DATABASES,SHOW VIEW ON *.* TO 'zbx_monitor'@'%';
 GRANT REPLICATION CLIENT,PROCESS,SHOW DATABASES,SHOW VIEW ON *.* TO 'zbx_monitor'@'127.0.0.1';
+GRANT REPLICATION CLIENT,PROCESS,SHOW DATABASES,SHOW VIEW ON *.* TO 'zbx_monitor'@'localhost';
 EOSQL
 
         control_server start "--init-file=${monitoring_init_file}"
@@ -232,9 +234,11 @@ initialize_mariadb() {
 USE mysql;
 DELETE FROM mysql.user WHERE User='';
 FLUSH PRIVILEGES;
-GRANT ALL ON *.* TO 'root'@'%' identified by 'ROOT_PASS' WITH GRANT OPTION;
+GRANT ALL ON *.* TO 'root'@'%' identified by '$ROOT_PASS' WITH GRANT OPTION;
 GRANT ALL ON *.* TO 'root'@'127.0.0.1' identified by '$ROOT_PASS' WITH GRANT OPTION;
+GRANT ALL ON *.* TO 'root'@'localhost' identified by '$ROOT_PASS' WITH GRANT OPTION;
 SET PASSWORD FOR 'root'@'127.0.0.1'=PASSWORD('${ROOT_PASS}');
+SET PASSWORD FOR 'root'@'localhost'=PASSWORD('${ROOT_PASS}');
 SET PASSWORD FOR 'root'@'%'=PASSWORD('${ROOT_PASS}');
 DROP DATABASE IF EXISTS test;
 EOSQL
@@ -295,6 +299,7 @@ EOF
                             cat <<EOF | silent sudo -u mariadb tee -a "${database_init_file}"
 GRANT ALL ON \`${!DB_NAME}\`.* TO '${!DB_USER}'@'%' IDENTIFIED BY '${!DB_PASS}';
 GRANT ALL ON \`${!DB_NAME}\`.* TO '${!DB_USER}'@'127.0.0.1' IDENTIFIED BY '${!DB_PASS}';
+GRANT ALL ON \`${!DB_NAME}\`.* TO '${!DB_USER}'@'localhost' IDENTIFIED BY '${!DB_PASS}';
 EOF
 
                     fi
