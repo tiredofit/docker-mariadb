@@ -1,3 +1,10 @@
+## 10.11-4.2.9 2023-11-27 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Fix 4.2.8 to allow 127.0.01 and localhost concurrently
+      - Fix issue where root password wasn't written properly
+
+
 ## 10.11-4.2.8 2023-11-23 <dave at tiredofit dot ca>
 
    ### Changed
