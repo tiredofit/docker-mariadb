@@ -76,7 +76,7 @@ RUN source /assets/functions/00-container && \
                     zstd \
                     && \
     \
-    pip3 install blobxfer && \
+    pip3 install --break-system-packages blobxfer && \
     \
     addgroup -S -g 3306 mariadb && \
     adduser -S -D -H -u 3306 -G mariadb -g "MariaDB" mariadb && \
