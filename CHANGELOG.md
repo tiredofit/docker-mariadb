@@ -1,3 +1,12 @@
+## 10.11-4.2.11 2024-01-11 <dave at tiredofit dot ca>
+
+All users are recommended to upgrade immediately to resolve a performance issue.
+
+   ### Changed
+      - Allow blobxfer package to be installed with Alpine 3.19
+      - Properly read default environment variables when starting mariadb engine
+
+
 ## 10.11-4.2.10 2023-12-08 <dave at tiredofit dot ca>
 
    ### Added
