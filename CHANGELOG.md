@@ -1,3 +1,10 @@
+## 10.11-4.2.12 2024-02-08 <dave at tiredofit dot ca>
+
+   ### Added
+      - MariaDB 10.11.7
+      - MySQLTuner 2.5.2
+
+
 ## 10.11-4.2.11 2024-01-11 <dave at tiredofit dot ca>
 
 All users are recommended to upgrade immediately to resolve a performance issue.
