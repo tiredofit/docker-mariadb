@@ -209,6 +209,7 @@ The backup functionality is a subset of the [tiredofit/db-backup](https://github
 
 | Parameter                         | Description                                                                                                                      | Default         |
 | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| `DB_BACKUP`                       | Activate backup scheduler by setting to `TRUE`                                                                                   | `FALSE`         |
 | `DB_BACKUP_BACKUP_LOCATION`       | Backup to `FILESYSTEM` or `S3` compatible services like S3, Minio, Wasabi                                                        | `FILESYSTEM`    |
 | `DB_BACKUP_MODE`                  | `AUTO` mode to use internal scheduling routines or `MANUAL` to simply use this as manual backups only executed by your own means | `AUTO`          |
 | `DB_BACKUP_MANUAL_RUN_FOREVER`    | `TRUE` or `FALSE` if you wish to try to make the container exit after the backup                                                 | `TRUE`          |
