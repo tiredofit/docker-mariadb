@@ -1,3 +1,9 @@
+## 11.8-5.1.0 2026-04-23 <code at nfastack dot com>
+
+   ### Added
+      - Add DBXX_RESTORE_FILE functionality to restore a previously dumped database on init, once, or on every container start
+
+
 ## 11.8-5.0.4 2026-02-05 <code at nfastack dot com>
 
    ### Changed

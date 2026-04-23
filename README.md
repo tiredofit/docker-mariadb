@@ -7,6 +7,7 @@ This repository will build a container image for (https://mariadb.org). A relati
 * Configuration tweaked to use all around settings for general usage - Can be changed
 * Can use official MariaDB/MySQL environment variables (MYSQL_USER|MARIADB_USER,MARIADB|MYSQL_PASSWORD, MARIADB|MYSQL_ROOT_PASSWORD)
 * Allows for automatically creating multiple databases on container initialization and subsequent reboots
+* Allows restoration of previously performed backup into database once or repeatedly
 * Automatic Table/DB Upgrade support if MariaDB version has changed
 * Includes MySQL Tuner inside image to optimize your configuration
 * Logging with automatic rotation
@@ -108,15 +109,15 @@ Below is the complete list of available options that can be used to customize yo
 #### Core Configuration
 
 #### Container Options
-| Parameter            | Description                                                  | Default         |
-| -------------------- | ------------------------------------------------------------ | --------------- |
-| `CERT_PATH`          | Certs Path                                                   |                 |
-| `CONFIG_FILE`        | (optional) Configuration File to load - Not needed to be set | `mariadb.cnf`   |
-| `CONFIG_PATH`        | (optional) Configuration Path                                | `/config/`      |
-| `DATA_PATH`          | Data Files Path                                              | `/data/`        |
-| `LOG_PATH`           | Log Files Path                                               | `/logs/`        |
-| `SOCKET_FILE`        | Socket Name                                                  | `mariadbd.sock` |
-| `SOCKET_PATH`        | Socket Path                                                  | `/run/mariadb/` |
+| Parameter     | Description                                                  | Default         |
+| ------------- | ------------------------------------------------------------ | --------------- |
+| `CERT_PATH`   | Certs Path                                                   |                 |
+| `CONFIG_FILE` | (optional) Configuration File to load - Not needed to be set | `mariadb.cnf`   |
+| `CONFIG_PATH` | (optional) Configuration Path                                | `/config/`      |
+| `DATA_PATH`   | Data Files Path                                              | `/data/`        |
+| `LOG_PATH`    | Log Files Path                                               | `/logs/`        |
+| `SOCKET_FILE` | Socket Name                                                  | `mariadbd.sock` |
+| `SOCKET_PATH` | Socket Path                                                  | `/run/mariadb/` |
 
 #### MariaDB Options
 
@@ -161,6 +162,23 @@ Create multiple databases and different usernames and passwords to access. You c
 | `DBXX_...`  | As above, should be able to go all the way to `99` |         |         | x        |
 
 A limit of 3 can be created when not in advanced mode.
+
+##### Restore on startup (DBXX_RESTORE)
+
+This image can import SQL dumps into databases created during initialization using per-database environment variables. Set `DB01_RESTORE_FILE`, `DB02_RESTORE_FILE`, ... to point to a SQL dump file that is readable inside the container.
+
+| Parameter           | Description                                                                     | Default | `_FILE` | Advanced |
+| ------------------- | ------------------------------------------------------------------------------- | ------- | ------- | -------- |
+| `DBXX_RESTORE_FILE` | Path and file inside container containing databse dump to restore.              |         |         |          |
+| `DBXX_RESTORE_MODE` | Restore using logic                                                             | `INIT`  |         |          |
+|                     | `INIT` / `FRESH` restores only on database initialization (database must be empty) |         |         |          |
+|                     | `ONCE` restores the file once, overwriting the database even if it contains data |         |         |          |
+|                     | `ALWAYS` restores the database, overwriting on each container startup.          |         |         |          |
+
+>> `ROOT_PASS` must be set so the importer can authenticate as root.
+>> If `DBxx_RESTORE_FILE` is set but the matching `DBxx_NAME` is missing the restore will be skipped and an error logged.
+>> Supported input formats: plain SQL and common compressed formats — gzip (`.gz`), bzip2 (`.bz2`), xz (`.xz`) and zstd (`.zst`).
+>> Modes that only run once (`ONCE`, `INIT`, `FRESH`) write a file into ${DATA_PATH}/.restore_<db_name> to prevent re-importing. Delete this file to allow re-importing for that database.
 
 #### Logging Options
 

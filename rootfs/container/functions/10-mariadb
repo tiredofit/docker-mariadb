@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: © 2025 Nfrastack <code@nfrastack.com>
+# SPDX-FileCopyrightText: © 2026 Nfrastack <code@nfrastack.com>
 #
 # SPDX-License-Identifier: MIT
 
@@ -96,7 +96,7 @@ mariadb_configure_daemon() {
         ;;
     esac
 
-    cat <<EOF | silent tee /etc/my.cnf
+    write_file root:mariadb@/etc/my.cnf:655 <<EOF
 !includedir ${CONFIG_PATH%/}/
 EOF
     if [ ! -f "${CONFIG_PATH%/}"/00-core.cnf ] ; then
@@ -174,16 +174,13 @@ Plugins.Mysql.Sessions.toi.Password=${monitor_password}
 EOF
                                 )
 
-                cat <<EOF | silent tee "${ZABBIX_CONFIG_PATH%/}"/"${ZABBIX_CONFIG_FILE}.d"/nfrastack_mariadb.conf
+                write_file zabbix:root@"${ZABBIX_CONFIG_PATH%/}"/"${ZABBIX_CONFIG_FILE}.d"/nfrastack_mariadb.conf:700 <<EOF
 # Zabbix MariaDB Configuration - Automatically Generated
 # Find Companion Zabbix Server Templates at https://github.com/nfrastack/container-mariadb
 # Autoregister=${mariadb_autoreg}
 
 ${mariadb_config}
 EOF
-
-                chmod 700 "${ZABBIX_CONFIG_PATH%/}"/"${ZABBIX_CONFIG_FILE}.d"/nfrastack_mariadb.conf
-                chown zabbix:root "${ZABBIX_CONFIG_PATH%/}"/"${ZABBIX_CONFIG_FILE}.d"/nfrastack_mariadb.conf
             ;;
         esac
     fi
@@ -231,13 +228,13 @@ mariadb_create_databases() {
             if [ -n "${!DB_NAME}" ] ; then
                 if ! silent mariadb -uroot --skip-column-names -e "use ${!DB_NAME};" ; then
                     print_notice "[create_databases] Creating Database: '${!DB_NAME}'"
-                    cat <<EOF | silent sudo -u mariadb tee -a "${database_init_file}"
+                    write_file -a mariadb@"${database_init_file}" <<EOF
 CREATE DATABASE IF NOT EXISTS \`${!DB_NAME}\` CHARACTER SET ${DB_CHARACTER_SET} COLLATE ${DB_COLLATION};
 EOF
                 fi
 
                 if [ -n "${!DB_USER}" ] && [ -n "${!DB_PASS}" ] ; then
-                        cat <<EOF | silent sudo -u mariadb tee -a "${database_init_file}"
+                        write_file -a mariadb@"${database_init_file}" <<EOF
 GRANT ALL ON \`${!DB_NAME}\`.* TO '${!DB_USER}'@'%' IDENTIFIED BY '${!DB_PASS}';
 GRANT ALL ON \`${!DB_NAME}\`.* TO '${!DB_USER}'@'127.0.0.1' IDENTIFIED BY '${!DB_PASS}';
 GRANT ALL ON \`${!DB_NAME}\`.* TO '${!DB_USER}'@'localhost' IDENTIFIED BY '${!DB_PASS}';
@@ -347,5 +344,231 @@ EOSQL
         echo "${MARIADB_VERSION} first installed on $(TZ=${TIMEZONE} date +'%Y-%m-%d %H:%M:%S %Z')" | silent tee "${DATA_PATH%/}"/.version
     fi
     rm -rf "${init_file}"
+}
+
+mariadb_restore_databases() {
+    restore_database() {
+        local i="${1}"
+        i=$(printf "%02d" $i)
+        transform_var file \
+                            DB${i}_RESTORE_FILE \
+                            DB${i}_RESTORE_MODE \
+                            DB${i}_NAME
+
+        local _restore_file_var=DB${i}_RESTORE_FILE
+        local _restore_mode_var=DB${i}_RESTORE_MODE
+        local _db_name_var=DB${i}_NAME
+        local _restore_file="${!_restore_file_var}"
+        local _restore_mode="${!_restore_mode_var:-${RESTORE_MODE}}"
+        local _db_name="${!_db_name_var}"
+
+        if [ -z "${_restore_file}" ] ; then return ; fi
+        if [ -z "${_db_name}" ] ; then
+            print_error "[restore] DB${i}_RESTORE_FILE is set but DB${i}_NAME is missing - skipping restore"
+            return
+        fi
+
+        local _restore_marker="${DATA_PATH%/}/.restore_${_db_name}"
+
+        case "${_restore_mode,,}" in
+            once | single )
+                if [ -f "${_restore_marker}" ] ; then
+                    print_warn "[restore] Database '${_db_name}' was already restored on $(cat "${_restore_marker}")"
+                    print_warn "[restore] Mode is 'ONCE' - skipping re-import. Remove DB${i}_RESTORE_FILE to silence this warning"
+                    return
+                fi
+            ;;
+            init | fresh )
+                if [ -f "${_restore_marker}" ] ; then
+                    print_warn "[restore] Database '${_db_name}' was already restored on $(cat "${_restore_marker}")"
+                    print_warn "[restore] Mode is '${_restore_mode^^}' - skipping re-import. Remove DB${i}_RESTORE_FILE to silence this warning"
+                    return
+                fi
+
+                # Only restore if the target database appears to be new (no tables)
+                export MYSQL_PWD="${ROOT_PASS}"
+                local _table_count
+                _table_count=$(mariadb --socket="${SOCKET_PATH%/}/${SOCKET_FILE}" -uroot --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='${_db_name}';" 2>/dev/null || echo "ERR")
+                unset MYSQL_PWD
+
+                if [ "${_table_count}" = "ERR" ] ; then
+                    print_error "[restore] Could not determine whether database '${_db_name}' is empty - skipping"
+                    return
+                fi
+
+                if [ "${_table_count:-0}" -ne 0 ] ; then
+                    print_warn "[restore] Database '${_db_name}' already contains ${_table_count} table(s) - skipping restore in '${_restore_mode^^}' mode"
+                    return
+                fi
+
+                print_warn "[restore] Mode is '${_restore_mode^^}' and database '${_db_name}' appears empty - proceeding with restore"
+
+                # Ensure the database exists before attempting to import (prevents "Unknown database").
+                export MYSQL_PWD="${ROOT_PASS}"
+                mariadb --socket="${SOCKET_PATH%/}/${SOCKET_FILE}" -uroot --batch --silent -e "CREATE DATABASE IF NOT EXISTS \`${_db_name}\` CHARACTER SET ${DB_CHARACTER_SET} COLLATE ${DB_COLLATION};" 2>/dev/null
+                if [ $? -ne 0 ] ; then
+                    unset MYSQL_PWD
+                    print_error "[restore] Failed to create database '${_db_name}' before restore - skipping"
+                    return
+                fi
+                unset MYSQL_PWD
+            ;;
+            always | force )
+                print_warn "[restore] Mode is '${_restore_mode^^}' for database '${_db_name}'"
+                print_warn "[restore] The database WILL be overwritten on EVERY container startup"
+                print_warn "[restore] Change DB${i}_RESTORE_MODE or remove DB${i}_RESTORE_FILE to prevent this"
+            ;;
+            * )
+                print_error "[restore] Unknown RESTORE_MODE '${_restore_mode}' for DB${i} - must be 'once', 'always', 'force', 'init', or 'fresh' - skipping"
+                return
+            ;;
+        esac
+
+        if [ ! -f "${_restore_file}" ] ; then
+            print_error "[restore] Restore file '${_restore_file}' not found for database '${_db_name}' - skipping"
+            return
+        fi
+
+        if [ ! -r "${_restore_file}" ] ; then
+            print_error "[restore] Restore file '${_restore_file}' is not readable - check permissions"
+            return
+        fi
+
+        local _file_size
+        _file_size=$(stat -c%s "${_restore_file}" 2>/dev/null)
+        if [ "${_file_size:-0}" -eq 0 ] ; then
+            print_error "[restore] Restore file '${_restore_file}' is empty - skipping"
+            return
+        fi
+
+        local _decompress_cmd=""
+        local _validate_head_cmd=""
+        local _detected_type=""
+        local _file_type
+        _file_type=$(file -b "${_restore_file}" 2>/dev/null)
+
+        if [ -n "${_file_type}" ] ; then
+            print_debug "[restore] File magic reports: ${_file_type}"
+            case "${_file_type,,}" in
+                *gzip* )                        _detected_type="gzip" ;;
+                *bzip2* )                       _detected_type="bzip2" ;;
+                *xz* )                          _detected_type="xz" ;;
+                *zstandard* | *zstd* )          _detected_type="zstd" ;;
+                *ascii* | *utf-8* | *text* )    _detected_type="plain" ;;
+            esac
+        fi
+
+        if [ -z "${_detected_type}" ] ; then
+            print_debug "[restore] Magic detection inconclusive, falling back to file extension"
+            case "${_restore_file##*.}" in
+                bz | bz2 )      _detected_type="bzip2" ;;
+                gz )            _detected_type="gzip" ;;
+                xz )            _detected_type="xz" ;;
+                zst | zstd )    _detected_type="zstd" ;;
+                sql )           _detected_type="plain" ;;
+                * )
+                    print_error "[restore] Cannot determine file type for '${_restore_file}' (magic: ${_file_type:-unknown}) - skipping"
+                    return
+                ;;
+            esac
+        fi
+
+        case "${_detected_type}" in
+            gzip )
+                _decompress_cmd="zcat"
+                _validate_head_cmd="zcat"
+                if ! command -v zcat >/dev/null 2>&1 ; then
+                    print_error "[restore] gzip compressed file detected but 'zcat' not available - skipping"
+                    return
+                fi
+            ;;
+            bzip2 )
+                _decompress_cmd="bzcat"
+                _validate_head_cmd="bzcat"
+                if ! command -v bzcat >/dev/null 2>&1 ; then
+                    print_error "[restore] bzip2 compressed file detected but 'bzcat' not available - skipping"
+                    return
+                fi
+            ;;
+            xz )
+                _decompress_cmd="xzcat"
+                _validate_head_cmd="xzcat"
+                if ! command -v xzcat >/dev/null 2>&1 ; then
+                    print_error "[restore] xz compressed file detected but 'xzcat' not available - skipping"
+                    return
+                fi
+            ;;
+            zstd )
+                _decompress_cmd="zstdcat"
+                _validate_head_cmd="zstdcat"
+                if ! command -v zstdcat >/dev/null 2>&1 ; then
+                    print_error "[restore] zstd compressed file detected but 'zstdcat' not available - skipping"
+                    return
+                fi
+            ;;
+            plain )
+                _decompress_cmd="cat"
+                _validate_head_cmd="head -n 50"
+            ;;
+        esac
+        print_debug "[restore] Detected type '${_detected_type}' for '${_restore_file}'"
+
+        print_debug "[restore] Validating SQL content of '${_restore_file}'"
+        local _head_sample
+        _head_sample=$(${_validate_head_cmd} "${_restore_file}" 2>/dev/null | head -c 8192)
+        if [ -z "${_head_sample}" ] ; then
+            print_error "[restore] Could not read content from '${_restore_file}' - file may be corrupt"
+            return
+        fi
+
+        local _looks_valid=false
+        if echo "${_head_sample}" | grep -qiE '^\s*(--|/\*|CREATE |DROP |INSERT |USE |SET |ALTER |LOCK |UNLOCK |START |BEGIN |GRANT |FLUSH )' ; then
+            _looks_valid=true
+        fi
+        if echo "${_head_sample}" | grep -qiE 'MariaDB dump|MySQL dump|mysqldump|mariadb-dump' ; then
+            _looks_valid=true
+        fi
+
+        if [ "${_looks_valid}" != "true" ] ; then
+            print_error "[restore] File '${_restore_file}' does not appear to contain valid MariaDB/MySQL SQL"
+            print_error "[restore] Expected SQL statements or mysqldump/mariadb-dump header - skipping to protect database"
+            return
+        fi
+        print_debug "[restore] SQL validation passed for '${_restore_file}'"
+
+        print_notice "[restore] Restoring '${_restore_file}' into database '${_db_name}'"
+        export MYSQL_PWD="${ROOT_PASS}"
+        ${_decompress_cmd} "${_restore_file}" | mariadb \
+                                                    --socket="${SOCKET_PATH%/}/${SOCKET_FILE}" \
+                                                    -uroot \
+                                                    "${_db_name}"
+        local _exit_code=$?
+        unset MYSQL_PWD
+
+        if [ "${_exit_code}" -eq 0 ] ; then
+            print_notice "[restore] Successfully restored '${_restore_file}' into '${_db_name}'"
+            TZ=${TIMEZONE} date +'%Y-%m-%d %H:%M:%S %Z' > "${_restore_marker}"
+            chown root:root "${_restore_marker}"
+
+            case "${_restore_mode,,}" in
+                once | single | init | fresh )
+                    print_warn "[restore] Database '${_db_name}' has been restored with mode '${_restore_mode^^}'"
+                    print_warn "[restore] This import will NOT run again. You should remove DB${i}_RESTORE_FILE from your environment"
+                ;;
+                always | force )
+                    print_warn "[restore] Database '${_db_name}' has been restored with mode '${_restore_mode^^}'"
+                    print_warn "[restore] This WILL happen again on next container startup unless you change DB${i}_RESTORE_MODE or remove DB${i}_RESTORE_FILE"
+                ;;
+            esac
+        else
+            print_error "[restore] Failed to restore '${_restore_file}' into '${_db_name}' (exit code: ${_exit_code})"
+        fi
+    }
+
+    if printenv | grep -qE '^DB([0-9]{2})_RESTORE_FILE=' ; then
+        mariadb_control_server start
+        floop "$(printenv | sort | grep -cE '^DB([0-9].)_RESTORE_FILE')" restore_database ELIF_EROTSER
+        mariadb_control_server stop
+    fi
 }
 

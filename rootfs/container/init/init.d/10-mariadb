@@ -1,5 +1,5 @@
 #!/command/with-contenv bash
-# SPDX-FileCopyrightText: © 2025 Nfrastack <code@nfrastack.com>
+# SPDX-FileCopyrightText: © 2026 Nfrastack <code@nfrastack.com>
 #
 # SPDX-License-Identifier: MIT
 
@@ -12,5 +12,6 @@ mariadb_bootstrap_variables
 mariadb_configure_daemon
 mariadb_initialize_engine
 mariadb_create_databases
+mariadb_restore_databases
 mariadb_configure_monitoring
 liftoff
