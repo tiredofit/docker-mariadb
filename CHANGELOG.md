@@ -1,3 +1,9 @@
+## 11.4-5.1.2 2026-05-27 <code at nfrastack dot com>
+
+   ### Added
+      - MariaDB 11.4.12
+
+
 ## 11.4-5.1.1 2026-05-18 <code at nfrastack dot com>
 
    ### Added
