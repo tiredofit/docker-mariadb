@@ -1,6 +1,6 @@
 services:
   example-db:
-    image: docker.io/nfrastack/mariadb:11.8
+    image: docker.io/nfrastack/mariadb:12.3
     stop_grace_period: 3m
     container_name: example-db
     volumes:
@@ -16,13 +16,10 @@ services:
       #- DB_NAME=database
       #- DB_USER=user
       #- DB_PASS=password
-
       ### OR
       - DB01_NAME=database_one
       - DB01_USER=database_userone
       - DB01_PASS=password
-      #- DB01_RESTORE_FILE=/restore/mariadb.sql.zst
-      #- DB01_RESTORE_MODE=init
       - DB02_NAME=database_two
       - DB02_USER=database_usertwo
       - DB02_PASS=password

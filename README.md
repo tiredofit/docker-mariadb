@@ -56,14 +56,14 @@ Image tag syntax is:
 `<image>:<branch>-<optional tag>-<optional_distribution>_<optional_distribution_variant>`
 
 Example:
-`ghcr.io/nfrastack/container-mariadb:11.8` or optionally
+`ghcr.io/nfrastack/container-mariadb:12.3` or optionally
 
-`ghcr.io/nfrastack/container-mariadb:11.8-1.0` or optionally
+`ghcr.io/nfrastack/container-mariadb:12.3-1.0` or optionally
 
-`ghcr.io/nfrastack/container-mariadb:11.8-1.0-alpine` or optinally
+`ghcr.io/nfrastack/container-mariadb:12.3-1.0-alpine` or optinally
 
 
-- The `branch` will relate to the MAJOR eg `11` and MINOR `.8` release.
+- The `branch` will relate to the MAJOR eg `12` and MINOR `.3` release.
 - An optional `tag` may exist that matches the [CHANGELOG](CHANGELOG.md) - These are the safest
 - If it is built for multiple distributions there may exist a value of `alpine` or `debian`
 - If there are multiple distribution variations it may include a version - see the registry for availability

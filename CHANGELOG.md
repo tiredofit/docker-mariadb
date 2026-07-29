@@ -1,3 +1,10 @@
+## 12.3-5.1.3 2026-07-29 <code at nfrastack dot com>
+
+   ### Added
+      - MariaDB 12.3
+      - Alpine 3.24 base
+
+
 ## 11.8-5.1.2 2026-05-27 <code at nfrastack dot com>
 
    ### Added
