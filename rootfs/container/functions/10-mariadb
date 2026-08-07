@@ -47,19 +47,19 @@ mariadb_bootstrap_variables() {
                         MARIADB_USER
 
     if [ -n "${MARIADB_ROOT_PASSWORD}" ]; then
-        ROOT_PASS=${MYSQL_ROOT_PASSWORD}
+        ROOT_PASS=${MARIADB_ROOT_PASSWORD}
     fi
 
-    if [ -n "${MARIDB_DATABASE}" ]; then
-        DB_NAME=${MYSQL_DATABASE}
+    if [ -n "${MARIADB_DATABASE}" ]; then
+        DB_NAME=${MARIADB_DATABASE}
     fi
 
     if [ -n "${MARIADB_USER}" ]; then
-        DB_USER=${MYSQL_USER}
+        DB_USER=${MARIADB_USER}
     fi
 
-    if [ -n "$MARIADB_PASSWORD" ]; then
-        DB_PASS=${MYSQL_PASSWORD}
+    if [ -n "${MARIADB_PASSWORD}" ]; then
+        DB_PASS=${MARIADB_PASSWORD}
     fi
 
     transform_var file \
@@ -133,8 +133,8 @@ EOF
     fi
 
     if var_true "${ENABLE_LOG_SLOW_QUERY}" ; then
-        truefalse_onezero ENABLE_LOG_GENERAL_QUERY
-        update_config ${core} slow_query_log_log "${ENABLE_LOG_SLOW_QUERY}"
+        truefalse_onezero ENABLE_LOG_SLOW_QUERY
+        update_config ${core} slow_query_log "${ENABLE_LOG_SLOW_QUERY}"
         create_logrotate mariadb-slowquery "${LOG_PATH%/}"/"${LOG_FILE_SLOW_QUERY}" none mariadb mariadb
     fi
 
