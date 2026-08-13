@@ -1,3 +1,10 @@
+## 10.6-5.1.3 2026-08-13 <code at nfrastack dot com>
+
+   ### Added
+      - MariaDB 10.6.28
+      - MySQLTuner 2.9.0
+
+
 ## 10.6-5.1.2 2026-05-27 <code at nfrastack dot com>
 
    ### Added
