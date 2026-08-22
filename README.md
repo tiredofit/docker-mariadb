@@ -4,8 +4,8 @@
 
 This repository will build a container image for (https://mariadb.org). A relational database forked from MySQL.
 
-* Configuration tweaked to use all around settings for general usage - Can be changed
-* Can use official MariaDB/MySQL environment variables (MYSQL_USER|MARIADB_USER,MARIADB|MYSQL_PASSWORD, MARIADB|MYSQL_ROOT_PASSWORD)
+* Ships configuration profiles tweaked for general usage - see `CONFIG_PROFILE`
+* Can use official MariaDB/MySQL environment variables (MYSQL_USER|MARIADB_USER, MYSQL_PASSWORD|MARIADB_PASSWORD, MYSQL_ROOT_PASSWORD|MARIADB_ROOT_PASSWORD, MYSQL_DATABASE|MARIADB_DATABASE)
 * Allows for automatically creating multiple databases on container initialization and subsequent reboots
 * Allows restoration of previously performed backup into database once or repeatedly
 * Automatic Table/DB Upgrade support if MariaDB version has changed
@@ -24,16 +24,25 @@ This repository will build a container image for (https://mariadb.org). A relati
 - [Table of Contents](#table-of-contents)
 - [Installation](#installation)
   - [Prebuilt Images](#prebuilt-images)
+    - [Multi-Architecture Support](#multi-architecture-support)
   - [Quick Start](#quick-start)
   - [Persistent Storage](#persistent-storage)
-- [Environment Variables](#environment-variables)
-  - [Base Images used](#base-images-used)
-  - [Core Configuration](#core-configuration)
+  - [Environment Variables](#environment-variables)
+    - [Base Images used](#base-images-used)
+    - [Core Configuration](#core-configuration)
+    - [Container Options](#container-options)
+    - [MariaDB Options](#mariadb-options)
+    - [Database Options](#database-options)
+      - [Restore on startup](#restore-on-startup)
+    - [Logging Options](#logging-options)
+    - [Monitoring Options](#monitoring-options)
 - [Users and Groups](#users-and-groups)
   - [Networking](#networking)
 - [Maintenance](#maintenance)
   - [Shell Access](#shell-access)
+  - [Mysql Tuner](#mysql-tuner)
 - [Support & Maintenance](#support--maintenance)
+- [References](#references)
 - [License](#license)
 
 ## Installation
@@ -60,7 +69,7 @@ Example:
 
 `ghcr.io/nfrastack/container-mariadb:11.8-1.0` or optionally
 
-`ghcr.io/nfrastack/container-mariadb:11.8-1.0-alpine` or optinally
+`ghcr.io/nfrastack/container-mariadb:11.8-1.0-alpine` or optionally
 
 
 - The `branch` will relate to the MAJOR eg `11` and MINOR `.8` release.
@@ -87,9 +96,10 @@ The following directories are used for configuration and can be mapped for persi
 
 | Directory  | Description                                                    |
 | ---------- | -------------------------------------------------------------- |
-| `/config/` | Optional directory to put .cnf files for additional directives |
-| `/data/`   | Datafiles                                                      |
-| `/logs/`   | Logfiles                                                       |
+| `/config/`  | Optional directory to put .cnf files for additional directives                        |
+| `/data/`    | Datafiles                                                                             |
+| `/logs/`    | Logfiles                                                                              |
+| `/restore/` | Optional directory holding SQL dumps to import - see [Restore on startup](#restore-on-startup) |
 
 ### Environment Variables
 
@@ -111,7 +121,7 @@ Below is the complete list of available options that can be used to customize yo
 #### Container Options
 | Parameter     | Description                                                  | Default         |
 | ------------- | ------------------------------------------------------------ | --------------- |
-| `CERT_PATH`   | Certs Path                                                   |                 |
+| `CERT_PATH`   | (optional) Certs Path - no default, only created when set    |                 |
 | `CONFIG_FILE` | (optional) Configuration File to load - Not needed to be set | `mariadb.cnf`   |
 | `CONFIG_PATH` | (optional) Configuration Path                                | `/config/`      |
 | `DATA_PATH`   | Data Files Path                                              | `/data/`        |
@@ -121,20 +131,27 @@ Below is the complete list of available options that can be used to customize yo
 
 #### MariaDB Options
 
-| Parameter         | Description                                                 | Default              | `_FILE` |
-| ----------------- | ----------------------------------------------------------- | -------------------- | ------- |
-| `CHARACTER_SET`   | Set Default Character Set                                   | `utf8mb4`            |         |
-| `COLLATION`       | Set Default Collation                                       | `utf8mb4_general_ci` |         |
-| `DB_AUTO_UPGRADE` | If MariaDB has changed from first time image has been used  | `TRUE`               |         |
-|                   | automatically upgrade DBs and tables to latest versions     | `TRUE`               |         |
-| `CONFIG_PROFILE`  | Type of Configuration - `standard`, or `default`, or `none` | `standard`           |         |
-| `LISTEN_PORT`     | Server Listening Port                                       | `3306`               |         |
-| `ROOT_PASS`       | Root Password for Instance (e.g. password)                  |                      | x       |
-| `MARIADBD_ARGS`   | Add extra arguments to the mariadb execution                |                      |         |
+| Parameter          | Description                                                                                 | Default              | `_FILE` |
+| ------------------ | ------------------------------------------------------------------------------------------- | -------------------- | ------- |
+| `CONFIG_PROFILE`   | Type of Configuration - `standard`, or `default`, or `none`                                 | `none`               |         |
+| `DB_AUTO_UPGRADE`  | If MariaDB has changed from first time image has been used, automatically upgrade DBs and tables to latest versions | `TRUE`               |         |
+| `DB_CHARACTER_SET` | Set Default Character Set                                                                   | `utf8mb4`            |         |
+| `DB_COLLATION`     | Set Default Collation                                                                       | `utf8mb4_general_ci` |         |
+| `DB_HOST`          | Host the internal clients connect to during initialization                                  | `127.0.0.1`          |         |
+| `INIT_FILE`        | (optional) Path inside the container to an SQL file executed instead of the built in bootstrap SQL - only on first initialization |                      |         |
+| `LISTEN_PORT`      | Server Listening Port                                                                       | `3306`               |         |
+| `ROOT_PASS`        | Root Password for Instance (e.g. password)                                                  |                      | x       |
+| `MARIADBD_ARGS`    | Add extra arguments to the mariadb execution                                                |                      |         |
 
 * With regards to `CONFIG_PROFILE`
   - `default` - Means the default my.cnf file from MariaDB
   - `standard` - My own settings that I find work for my own DB servers.
+  - `none` (also accepted: `blank`, `false`) - Only the automatically generated `00-core.cnf` is written, no tuned configuration file is created. This is the current default, so set `CONFIG_PROFILE=standard` explicitly if you want the tuned settings.
+  - Any other value falls back to `default`.
+
+* `00-core.cnf` inside `CONFIG_PATH` is generated and overwritten from the environment variables on every container start. Put your own directives into additional `<name>.cnf` files in the same directory.
+
+* `DB_PORT` exists but is currently always derived from `LISTEN_PORT` and cannot be set independently.
 
 #### Database Options
 
@@ -163,34 +180,43 @@ Create multiple databases and different usernames and passwords to access. You c
 
 A limit of 3 can be created when not in advanced mode.
 
-##### Restore on startup (DBXX_RESTORE)
+* The `DBXX` prefixes must be numbered consecutively starting at `01` (`DB01`, `DB02`, `DB03`, ...). Gaps are not supported - the number of databases processed is derived from how many `DBXX_NAME` variables are present, so setting e.g. only `DB05_NAME` will not create anything.
+* The official `MYSQL_DATABASE` / `MARIADB_DATABASE`, `MYSQL_USER` / `MARIADB_USER` and `MYSQL_PASSWORD` / `MARIADB_PASSWORD` variables are mapped onto `DB_NAME`, `DB_USER` and `DB_PASS`, which in turn become `DB01_*` when those are unset.
+
+##### Restore on startup
 
 This image can import SQL dumps into databases created during initialization using per-database environment variables. Set `DB01_RESTORE_FILE`, `DB02_RESTORE_FILE`, ... to point to a SQL dump file that is readable inside the container.
 
-| Parameter           | Description                                                                     | Default | `_FILE` | Advanced |
-| ------------------- | ------------------------------------------------------------------------------- | ------- | ------- | -------- |
-| `DBXX_RESTORE_FILE` | Path and file inside container containing databse dump to restore.              |         |         |          |
-| `DBXX_RESTORE_MODE` | Restore using logic                                                             | `INIT`  |         |          |
-|                     | `INIT` / `FRESH` restores only on database initialization (database must be empty) |         |         |          |
-|                     | `ONCE` restores the file once, overwriting the database even if it contains data |         |         |          |
-|                     | `ALWAYS` restores the database, overwriting on each container startup.          |         |         |          |
+| Parameter           | Description                                                                     | Default           | `_FILE` | Advanced |
+| ------------------- | ------------------------------------------------------------------------------- | ----------------- | ------- | -------- |
+| `DBXX_RESTORE_FILE` | Path and file inside container containing database dump to restore.              |                   | x       |          |
+| `DBXX_RESTORE_MODE` | Restore using logic                                                             | `${RESTORE_MODE}` | x       |          |
+|                     | `INIT` / `FRESH` restores only on database initialization (database must be empty) |                   |         |          |
+|                     | `ONCE` / `SINGLE` restores the file once, overwriting the database even if it contains data |          |         |          |
+|                     | `ALWAYS` / `FORCE` restores the database, overwriting on each container startup. |                   |         |          |
+| `RESTORE_MODE`      | Default restore mode used for every database that has no `DBXX_RESTORE_MODE` set | `INIT`            |         |          |
 
 >> `ROOT_PASS` must be set so the importer can authenticate as root.
 >> If `DBxx_RESTORE_FILE` is set but the matching `DBxx_NAME` is missing the restore will be skipped and an error logged.
 >> Supported input formats: plain SQL and common compressed formats — gzip (`.gz`), bzip2 (`.bz2`), xz (`.xz`) and zstd (`.zst`).
->> Modes that only run once (`ONCE`, `INIT`, `FRESH`) write a file into ${DATA_PATH}/.restore_<db_name> to prevent re-importing. Delete this file to allow re-importing for that database.
+>> Modes that only run once (`ONCE`, `SINGLE`, `INIT`, `FRESH`) write a file into ${DATA_PATH}/.restore_<db_name> to prevent re-importing. Delete this file to allow re-importing for that database.
+>> Any other value is rejected with an error and the restore for that database is skipped.
 
 #### Logging Options
 
-| Parameter                  | Description                                                  | Default          |
-| -------------------------- | ------------------------------------------------------------ | ---------------- |
-| `ENABLE_LOG_ERROR`         | Enable Error Logging                                         | `TRUE`           |
-| `ENABLE_LOG_GENERAL_QUERY` | Log all connections and queries to server (performance hit!) | `FALSE`          |
-| `ENABLE_SLOW_QUERY_LOG`    | Log all slow queries                                         | `FALSE`          |
-| `LOG_LEVEL`                | Log Level for warnings `0` to `9`                            | `2`              |
-| `LOG_FILE_ERROR`           | Error Log File Name                                          | `error.log`      |
-| `LOG_FILE_GENERAL_QUERY`   | General Query Log File name                                  | `general.log`    |
-| `LOG_FILE_SLOW_QUERY`      | Slow Query Log File Name                                     | `slow_query.log` |
+| Parameter                  | Description                                                  | Default            |
+| -------------------------- | ------------------------------------------------------------ | ------------------ |
+| `ENABLE_LOG_ERROR`         | Enable Error Logging                                         | `TRUE`             |
+| `ENABLE_LOG_GENERAL_QUERY` | Log all connections and queries to server (performance hit!) | `FALSE`            |
+| `ENABLE_LOG_SLOW_QUERY`    | Log all slow queries                                         | `FALSE`            |
+| `LOG_LEVEL`                | Log Level for warnings `0` to `9`                            | `2`                |
+| `LOG_FILE_ERROR`           | Error Log File Name                                          | `error.log`        |
+| `LOG_FILE_GENERAL_QUERY`   | General Query Log File name                                  | `general.log`      |
+| `LOG_FILE_SLOW_QUERY`      | Slow Query Log File Name                                     | `slowqueries.log`  |
+
+#### Monitoring Options
+
+Zabbix monitoring is configured automatically when monitoring is enabled in the base image. See the [container-base](https://github.com/nfrastack/container-base/) documentation for `CONTAINER_ENABLE_MONITORING` and `CONTAINER_MONITORING_BACKEND`. Companion Zabbix server templates live in the [zabbix_templates](zabbix_templates) folder.
 
 ## Users and Groups
 
@@ -215,7 +241,7 @@ For debugging and maintenance, `bash` and `sh` are available in the container.
 
 ### Mysql Tuner
 
-This image comes with [Mysql Tuner](https://github.com/major/MySQLTuner-perl). Simply enter inside the container and execute `mysql-tuner` along with your arguments.
+This image comes with [Mysql Tuner](https://github.com/major/MySQLTuner-perl). Simply enter inside the container and execute `mysqltuner` along with your arguments.
 
 ## Support & Maintenance
 
