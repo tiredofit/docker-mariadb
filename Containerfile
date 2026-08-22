@@ -18,10 +18,10 @@ LABEL \
         org.opencontainers.image.licenses="MIT"
 
 ARG \
-    MARIADB_VERSION="10.11.18" \
+    MARIADB_VERSION="10.11.19" \
     MARIADB_REPO_URL="https://github.com/mariadb/server" \
     MYSQLTUNER_REPO_URL="https://github.com/major/MySQLTuner-perl" \
-    MYSQLTUNER_VERSION="v2.6.0"
+    MYSQLTUNER_VERSION="v2.9.1"
 
 COPY CHANGELOG.md /usr/src/container/CHANGELOG.m
 COPY LICENSE /usr/src/container/LICENSE
