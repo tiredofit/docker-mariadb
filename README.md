@@ -215,7 +215,7 @@ For debugging and maintenance, `bash` and `sh` are available in the container.
 
 ### Mysql Tuner
 
-This image comes with [Mysql Tuner](https://github.com/major/MySQLTuner-perl). Simply enter inside the container and execute `mysql-tuner` along with your arguments.
+This image comes with [Mysql Tuner](https://github.com/major/MySQLTuner-perl). Simply enter inside the container and execute `mysqltuner` along with your arguments.
 
 ## Support & Maintenance
 
